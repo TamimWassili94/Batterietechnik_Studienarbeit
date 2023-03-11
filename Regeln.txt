@@ -10,3 +10,9 @@ Allgemeine Programmierregeln:
 8. Beschreibende Namen verwenden um lesbarkeit des Codes zu verbessern
 9. Keine Duplikate
 10. Klassenorientiertes Programmieren
+
+Die objektorientierte Programmierung ist besonders nützlich, um komplexe Strukturen und
+Beziehungen zwischen den verschiedenen Komponenten eines Systems zu modellieren,
+während die funktionale Programmierung gut geeignet ist, um komplexe Algorithmen und
+Datenverarbeitungsprozesse zu implementieren. Durch die Verwendung beider Ansätze
+können Sie eine Software erstellen, die sowohl effektiv als auch gut strukturiert ist.
