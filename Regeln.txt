@@ -5,3 +5,8 @@ Allgemeine Programmierregeln:
 3. Dateinamen müssen Konsistent sein
 4. Versionsverwaltung mit GIT
 5. Code wird klar und prägnant kommentiert
+6. Beste Practices mit PEP8
+7. Funktionen sollten nicht länger als 20 Zeilen sein
+8. Beschreibende Namen verwenden um lesbarkeit des Codes zu verbessern
+9. Keine Duplikate
+10. Klassenorientiertes Programmieren
