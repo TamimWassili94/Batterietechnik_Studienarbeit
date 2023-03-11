@@ -1,0 +1,7 @@
+
+Allgemeine Programmierregeln:
+1. Frontend und Backend Code wird in separate Ordner angelegt.
+2. Unterordner werden für spezifische Funktionen erstellt, um eine bessere Organisation zu Gewährleisten
+3. Dateinamen müssen Konsistent sein
+4. Versionsverwaltung mit GIT
+5. Code wird klar und prägnant kommentiert

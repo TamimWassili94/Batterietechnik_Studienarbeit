@@ -6,7 +6,7 @@ modelliert. Diese Modelle erlauben die Berechnung von dynamischen Lastfällen
 Im Modul Batterietechnik ist die Simulation des Batterieverhaltens ein wichtiges Werkzeug, um 
 die Ersatzmodelle einer Batterie im Vergleich zum tatsächlichen Verhalten einer Batterie 
 validieren zu können. Ziel ist es das bestehende Simulink Modell in einem Python-Code 
-umzusetzen. Es gelten die gleichen Anforderungen wie für das Simulink-Programm
+umzusetzen. Es gelten die gleichen Anforderungen wie für das Simulink-Programm.
 
 Das zu erzeugende Programm sollte daher folgende Anforderungen/ Funktionen beinhalten:
 - Umsetzung in Python
