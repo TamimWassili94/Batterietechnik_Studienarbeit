@@ -9,7 +9,6 @@ Standarttool für Datenanalyse ist"""
 import scipy.io
 import pandas as pd
 
-
 # lädt die .mat Datei
 def dotmatloader(dateiname):
     scipydata = scipy.io.loadmat(dateiname)
@@ -30,6 +29,7 @@ def dotmat_to_pandas(dateiname):
     scipydata = dotmatloader(dateiname)
     return scipytopandasconverter(scipydata)
 
+
 """testen der angegebenen Funktionen - erfolgreich"""
-df = dotmat_to_pandas("Profile_1.mat")
-print(df)
+# df = dotmat_to_pandas("Profile_1.mat")
+# print(df)

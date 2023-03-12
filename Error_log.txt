@@ -1,0 +1,9 @@
+Error 0 = Unbekannte Variable:
+    Die Eingabe ist keiner mathematischen variable definiert. Derzeit sind pi und euler Zahl definiert
+
+        Lösung:
+        Bitte eines der offiziellen Symbole verwenden:"
+        e & exp := Euler-Zahl"
+        pi := Pi"
+        ^ & ** für Exponent"
+        sqrt() für Wurzel"
