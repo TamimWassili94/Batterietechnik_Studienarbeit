@@ -7,3 +7,8 @@ Error 0 = Unbekannte Variable:
         pi := Pi"
         ^ & ** für Exponent"
         sqrt() für Wurzel"
+
+Error 02 = Falsches Dateiformat
+    Ungültiges Dateiformat. Bitte wählen Sie eine .mat- oder .csv-Datei aus.
+
+    Lösung: Richtiges dateiformat auswählen
