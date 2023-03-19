@@ -20,6 +20,7 @@ Batterieprofilen so ist. Empfehlenswert ist hier noch ein selector der eine Vari
 def scipytopandasconverter(scipydata):
     dataframe = pd.DataFrame(scipydata['A'])
     dataframe = dataframe.rename(index={0: 'Zeit [s]', 1: 'Leistung [W]'})
+    dataframe = dataframe.transpose()
     return dataframe
 
 
@@ -31,5 +32,6 @@ def dotmat_to_pandas(dateiname):
 
 
 """testen der angegebenen Funktionen - erfolgreich"""
-# df = dotmat_to_pandas("Profile_1.mat")
-# print(df)
+#df = dotmat_to_pandas("Profile_1.mat")
+#print(df)
+#print("Column names:", list(df.columns))
