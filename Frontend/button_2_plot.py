@@ -1,14 +1,13 @@
-import tkinter as tk
+# button_2_plot.py
 
-def open_button2_window(self):
-    # Create a new window
-    self.button2_window = tk.Toplevel(self.master)
-    self.button2_window.title("Button 2 Window")
+import matplotlib.pyplot as plt
 
-    # Create some widgets in the new window
-    label = tk.Label(self.button2_window, text="This is Button 2's window!")
-    button = tk.Button(self.button2_window, text="Close", command=self.button2_window.destroy)
+def open_plot(data):
+    # Create plot using data
+    plt.plot(data['Zeit [s]'], data['Leistung [W]'])
+    plt.xlabel('Zeit [s]')
+    plt.ylabel('Leistung [W]')
+    plt.title('Plot of Data')
 
-    # Arrange the widgets using grid layout
-    label.grid(row=0, column=0, padx=10, pady=10)
-    button.grid(row=1, column=0, padx=10, pady=10, sticky="e")
+    # Display plot in new window
+    plt.show()

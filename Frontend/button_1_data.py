@@ -7,7 +7,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'B
 import Matlab_dotmat_reader
 
 
-def open_file_selector(button2, button3, button4, button5, button6, treeview):
+def open_file_selector(mainmenu_instance):
+    button1,button2, button3, button4, button5, button6, treeview = mainmenu_instance.button1,\
+        mainmenu_instance.button2, \
+        mainmenu_instance.button3, \
+        mainmenu_instance.button4, \
+        mainmenu_instance.button5, \
+        mainmenu_instance.button6, \
+        mainmenu_instance.treeview
+
     filetypes = [("CSV files", "*.csv"), ("MAT files", "*.mat"), ("All files", "*.*")]
     filepath = filedialog.askopenfilename(title="Select a file", filetypes=filetypes)
     if filepath:
@@ -46,5 +54,7 @@ def open_file_selector(button2, button3, button4, button5, button6, treeview):
         button5.config(state=tk.DISABLED)
         button6.config(state=tk.DISABLED)
 
+    mainmenu_instance.button1.dataframe = data
+    print(mainmenu_instance.button1.dataframe)
 
 

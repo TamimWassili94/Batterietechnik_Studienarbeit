@@ -1,17 +1,28 @@
 import tkinter as tk
 from tkinter import ttk
-from button_1 import open_file_selector
+from button_1_data import open_file_selector
+from button_2_plot import open_plot
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
 
-class Main_Menu:
+
+class MainMenu:
     def __init__(self, master):
         self.master = master
+        self.plot_frame = tk.Frame(master)
+        self.plot_frame.grid(row=1, column=0, columnspan=2, padx=10, pady=10, sticky="nsew")
+
+        self.button2 = tk.Button(master, text="Button 2", command=self.open_plot)
+        self.button2.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
         master.title("Main Menu")
 
         # Create buttons and assign them to a function
-        self.button1 = tk.Button(master, text="Import Data", command=lambda: open_file_selector(
-            self.button2, self.button3, self.button4, self.button5, self.button6, self.treeview)
-                                 )
-        self.button2 = tk.Button(master, text="Button 2", command=self.do_something, state=tk.DISABLED)
+        #self.button1 = tk.Button(master, text="Import Data", command=lambda: open_file_selector(
+        #    self.button2, self.button3, self.button4, self.button5, self.button6, self.treeview))
+
+        self.button1 = tk.Button(master, text="Import Data", command=lambda: open_file_selector(self))
+        self.button2 = tk.Button(master, text="Button 2", command=self.open_plot)
         self.button3 = tk.Button(master, text="Button 3", command=self.do_something, state=tk.DISABLED)
         self.button4 = tk.Button(master, text="Button 4", command=self.do_something, state=tk.DISABLED)
         self.button5 = tk.Button(master, text="Button 5", command=self.do_something, state=tk.DISABLED)
@@ -67,7 +78,31 @@ class Main_Menu:
     def do_something(self):
         print("Button pressed!")
 
+    def open_plot(self):
+        # Get the data from Button 1
+        data = self.button1.dataframe
+
+        # Create a figure and plot the data
+        fig = Figure(figsize=(5, 4), dpi=100)
+        ax = fig.add_subplot(111)
+        ax.plot(data["Zeit [s]"], data["Leistung [W]"], linewidth=0.5)
+        ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.5)
+        ax.set_xlabel("Zeit [s]")
+        ax.set_ylabel("Leistung [W]")
+
+        # Create a canvas to display the plot in the main menu window
+        if hasattr(self, "canvas"):
+            self.canvas.get_tk_widget().destroy()
+        self.canvas = FigureCanvasTkAgg(fig, master=self.master)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().grid(row=0, column=2, rowspan=3, padx=10, pady=10, sticky="nsew")
+
+        # Add a toolbar with a zoom button to the plot window
+        toolbar = NavigationToolbar2Tk(self.canvas, self.master)
+        toolbar.grid(row=4, column=2, padx=10, pady=10, sticky="e")
+        toolbar.update()
+
 
 root = tk.Tk()
-main_menu = Main_Menu(root)
+main_menu = MainMenu(root)
 root.mainloop()
