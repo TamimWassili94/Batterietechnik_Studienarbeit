@@ -2,8 +2,8 @@ import scipy.io
 import pandas as pd
 import h5py
 import os
-from tkinter import filedialog
-from tkinter import Tk
+import matplotlib.pyplot as plt
+
 
 def dotmatloader(dateiname):
     scipydata = scipy.io.loadmat(dateiname)
@@ -11,7 +11,7 @@ def dotmatloader(dateiname):
 
 def scipytopandasconverter(scipydata):
     dataframe = pd.DataFrame(scipydata['A'])
-    dataframe = dataframe.rename(index={0: 'Zeit [s]', 1: 'Leistung [W]'})
+    dataframe = dataframe.rename(index={0: 'Zeit [s]', 1: 'Leistung [kW]'})
     dataframe = dataframe.transpose()
     return dataframe
 
@@ -54,8 +54,23 @@ def dotmat_to_pandas(dateiname):
 
     return dataframe
 
+def get_axis_titles(dataframe):
+    x_axis_title = dataframe.columns[0]  # Assuming the first column is the x-axis
+    y_axis_title = dataframe.columns[1]  # Assuming the second column is the y-axis
+    return x_axis_title,y_axis_title
+
+    return x_axis_title, y_axis_title
+def plot_dataframe(dataframe, x_column, y_column):
+
+    plt.plot(dataframe[x_column], dataframe[y_column])
+    plt.xlabel(x_column)
+    plt.ylabel(y_column)
+    plt.title(f'Scatter Plot: {x_column} vs {y_column}')
+    plt.show()
+
 
 # testen der angegebenen Funktionen - erfolgreich
-# df = dotmat_to_pandas("Profile_1.mat")
-# print(df)
-# print("Column names:", list(df.columns))
+df = dotmat_to_pandas("Profile_1.mat")
+x_title,y_title = get_axis_titles(df)
+
+
