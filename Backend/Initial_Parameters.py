@@ -1,6 +1,5 @@
 import numpy as np
 
-
 soc_init = 40
 q_zelle = 5.6 #[Ah]
 I_ZELLE = -1 #[A]
@@ -9,7 +8,7 @@ Steptime = 1
 
 # SOC steps [%]
 SOCsteps = np.arange(30, 71, 10)
-soc_steps_ocv = np.arange(0,100,10)
+soc_steps_ocv = np.arange(0,101,10)
 
 # Temperaturschritte [K]
 temp_steps = np.array([253.15, 263.15, 283.15, 298.15, 313.15, 323.15])
@@ -24,6 +23,9 @@ KAPtotal = 4.75
 # Ohmscher Widerstand R
 R_values = np.array([0.015456, 0.008921403, 0.003025827, 0.00178, 0.0013081, 0.0011997])
 R = np.outer(R_values, np.ones(len(SOCsteps)))
+
+print(R)
+print(R_values)
 
 # Ohmscher Widerstand R1
 R1 = np.array([
@@ -69,6 +71,19 @@ C2 = np.array([
 SOCsteps_Takano = np.arange(0, 101, 5)
 DeltaOCVdT = 1e-3 * np.array([-0.06, -0.2, -0.3, -0.35, -0.25, -0.2, -0.145, -0.11, -0.1, 0,
                               0.05, 0.1, 0.19, 0.15, 0.12, 0.1, 0.05, 0.05, 0.05, 0.025, 0])
+
+
+# Check shapes
+shape_R1 = R1.shape
+shape_C1 = C1.shape
+shape_R2 = R2.shape
+shape_C2 = C2.shape
+
+print(f"Shape of R1: {shape_R1}")
+print(f"Shape of C1: {shape_C1}")
+print(f"Shape of R2: {shape_R2}")
+print(f"Shape of C2: {shape_C2}")
+
 
 # Thermische Parameter
 m = 0.2147

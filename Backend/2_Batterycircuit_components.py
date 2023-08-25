@@ -3,46 +3,54 @@ import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 from SOC_Block_in_Python import soc
 import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
 
-def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, OCV_data):
-    """
-    Create a 2D lookup table using the given data and interpolate to find OCV.
+from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
+                                R, SOCsteps, R1)
 
-    Parameters:
-    - row: A row from a dataframe containing SOC and Temp columns
-    - SOC_breakpoints: SOC values from your data
-    - Temp_breakpoints: Temperature values from your data
-    - OCV_data: OCV values corresponding to the SOC and Temp breakpoints
+from scipy.interpolate import RegularGridInterpolator
+import numpy as np
 
-    Returns:
-    Interpolated OCV value for the SOC and Temp in the row.
-    """
-
+def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
     SOC = row['SOC']
     Temp = row['Temp']
 
-    # Create the interpolating function based on the given data
-    interp_func = RegularGridInterpolator((Temp_breakpoints, SOC_breakpoints), OCV_data)
+    # If SOC or Temp is out of range, manually set to the closest value within range
+    if SOC < min(SOC_breakpoints):
+        SOC = min(SOC_breakpoints)
+    if SOC > max(SOC_breakpoints):
+        SOC = max(SOC_breakpoints)
 
-    # Use the function to interpolate OCV for the given SOC and Temp
-    return interp_func(np.array([[Temp, SOC]]))[0]
+    if Temp < min(Temp_breakpoints):
+        Temp = min(Temp_breakpoints)
+    if Temp > max(Temp_breakpoints):
+        Temp = max(Temp_breakpoints)
+
+    # Create grid and multivariate data points
+    points = np.array([[t, s] for t in Temp_breakpoints for s in SOC_breakpoints])
+    values = table_data.flatten()
+
+    # Perform the interpolation
+    interp_val = griddata(points, values, (Temp, SOC), method='linear')
+    return interp_val
 
 
-# Your data
-SOCsteps_OCV = np.arange(0, 101, 10)
-Tsteps = np.array([253.15, 263.15, 283.15, 298.15, 313.15, 323.15])
-OCV_single_row = np.array([3.3383, 3.4305, 3.5207, 3.5875, 3.6381, 3.7006, 3.7786, 3.8741, 3.9564, 4.0601, 4.1651])
-OCV = np.tile(OCV_single_row, (len(Tsteps), 1))
-
-# Sample dataframe with your input data
-df = pd.DataFrame({
+# Für Temp werden gerade konstante Werte angenommen da es noch keine temperatursimulation gibt.
+SOC_DATAFRAME = pd.DataFrame({
     'SOC': soc["SOC [%]"],
-    'Temp': np.full(2361, 255)
+    'Temp': np.full(2361, 298.15)
 })
 
-df['OCV'] = df.apply(lookup_2d, axis=1, args=(SOCsteps_OCV, Tsteps, OCV))
-print(df)
+SOC_DATAFRAME['OCV'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(soc_steps_ocv, temp_steps, ocv))
+print(SOC_DATAFRAME)
 
+#R ist bei konstanter Temperatur auch konstant
+SOC_DATAFRAME['R'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R))
+print(SOC_DATAFRAME)
+
+#R ist bei konstanter Temperatur auch konstant
+SOC_DATAFRAME['R1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R1))
+print(SOC_DATAFRAME)
 
 def plot_OCV(df):
     """
@@ -62,7 +70,7 @@ def plot_OCV(df):
     plt.show()
 
 
-plot_OCV(df)
+plot_OCV(SOC_DATAFRAME)
 
 
 def plot_OCV_values(df):
@@ -83,4 +91,4 @@ def plot_OCV_values(df):
     plt.show()
 
 
-plot_OCV_values(df)
+plot_OCV_values(SOC_DATAFRAME)
