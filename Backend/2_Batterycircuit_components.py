@@ -11,6 +11,8 @@ from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
 from scipy.interpolate import RegularGridInterpolator
 import numpy as np
 
+###Test
+
 def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
     SOC = row['SOC']
     Temp = row['Temp']
