@@ -1,17 +1,14 @@
 import numpy as np
 import pandas as pd
-from scipy.interpolate import RegularGridInterpolator
 from SOC_Block_in_Python import soc
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 
+# importieren von parametern aus anderer .py
 from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
-                                R, SOCsteps, R1)
+                                R, SOCsteps, R1, C1, R2, C2)
 
-from scipy.interpolate import RegularGridInterpolator
-import numpy as np
 
-###Test
 
 def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
     SOC = row['SOC']
@@ -44,16 +41,18 @@ SOC_DATAFRAME = pd.DataFrame({
 })
 
 SOC_DATAFRAME['OCV'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(soc_steps_ocv, temp_steps, ocv))
-print(SOC_DATAFRAME)
 
 #R ist bei konstanter Temperatur auch konstant
 SOC_DATAFRAME['R'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R))
-print(SOC_DATAFRAME)
 
 #R ist bei konstanter Temperatur auch konstant
 SOC_DATAFRAME['R1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R1))
-print(SOC_DATAFRAME)
 
+SOC_DATAFRAME['C1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C1))
+
+SOC_DATAFRAME['R2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R2))
+
+SOC_DATAFRAME['C2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C2))
 def plot_OCV(df):
     """
     Plot the OCV against SOC from the given dataframe.
@@ -75,22 +74,28 @@ def plot_OCV(df):
 plot_OCV(SOC_DATAFRAME)
 
 
-def plot_OCV_values(df):
+def plot_OCV_values(df, column_name, unit):
     """
     Plot the OCV values from the given dataframe.
 
     Parameters:
     - df: DataFrame containing the OCV column.
+    - column_name = string of SOC
     """
 
     plt.figure(figsize=(10, 6))
-    plt.plot(df['OCV'], '-o', label='OCV')
-    plt.title('Open Circuit Voltage (OCV) Values')
-    plt.xlabel('Index')
-    plt.ylabel('OCV (V)')
+    plt.plot(df[column_name], '-o', label=column_name)
+    plt.title(column_name)
+    plt.xlabel('timestamps')
+    plt.ylabel(f"{column_name}  {unit}")
     plt.grid(True)
     plt.legend()
     plt.show()
 
 
-plot_OCV_values(SOC_DATAFRAME)
+plot_OCV_values(SOC_DATAFRAME, "OCV", "-")
+plot_OCV_values(SOC_DATAFRAME, "R", "(V)")
+plot_OCV_values(SOC_DATAFRAME, "R1", "(V)")
+plot_OCV_values(SOC_DATAFRAME, "C1", "(Coloumbina)")
+plot_OCV_values(SOC_DATAFRAME, "R2", "(V)")
+plot_OCV_values(SOC_DATAFRAME, "C2", "(Coloumbina)")
