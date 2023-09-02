@@ -8,11 +8,10 @@ from scipy.interpolate import griddata
 from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
                                 R, SOCsteps, R1, C1, R2, C2)
 
-
-
 def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
     SOC = row['SOC']
     Temp = row['Temp']
+    Timestamp = row['Zeit [s]']
 
     # If SOC or Temp is out of range, manually set to the closest value within range
     if SOC < min(SOC_breakpoints):
@@ -33,26 +32,28 @@ def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
     interp_val = griddata(points, values, (Temp, SOC), method='linear')
     return interp_val
 
-
 # Für Temp werden gerade konstante Werte angenommen da es noch keine temperatursimulation gibt.
 SOC_DATAFRAME = pd.DataFrame({
     'SOC': soc["SOC [%]"],
-    'Temp': np.full(2361, 298.15)
+    'Temp': np.full(2361, 298.15),
+    'Zeit [s]': soc['Zeit [s]']
 })
 
+
 SOC_DATAFRAME['OCV'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(soc_steps_ocv, temp_steps, ocv))
+#SOC_DATAFRAME['OCV'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(soc_steps_ocv, temp_steps, ocv))
 
 #R ist bei konstanter Temperatur auch konstant
-SOC_DATAFRAME['R'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R))
+#SOC_DATAFRAME['R'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R))
 
 #R ist bei konstanter Temperatur auch konstant
-SOC_DATAFRAME['R1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R1))
+#SOC_DATAFRAME['R1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R1))
 
-SOC_DATAFRAME['C1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C1))
+#SOC_DATAFRAME['C1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C1))
 
-SOC_DATAFRAME['R2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R2))
+#SOC_DATAFRAME['R2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R2))
 
-SOC_DATAFRAME['C2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C2))
+#SOC_DATAFRAME['C2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C2))
 def plot_OCV(df):
     """
     Plot the OCV against SOC from the given dataframe.
@@ -74,19 +75,27 @@ def plot_OCV(df):
 plot_OCV(SOC_DATAFRAME)
 
 
-def plot_OCV_values(df, column_name, unit):
+def plot_OCV_values(df, column_name, unit, x_axis_column="Zeit [s]"):
     """
     Plot the OCV values from the given dataframe.
 
     Parameters:
     - df: DataFrame containing the OCV column.
-    - column_name = string of SOC
+    - column_name: string representing the column name for y-axis
+    - unit: string representing the unit for y-axis
+    - x_axis_column: string representing the column name for x-axis (default is None, which uses the DataFrame index)
     """
 
     plt.figure(figsize=(10, 6))
-    plt.plot(df[column_name], '-o', label=column_name)
+
+    if x_axis_column is None:
+        x_data = df.index
+    else:
+        x_data = df[x_axis_column]
+
+    plt.plot(x_data, df[column_name], '-o', label=column_name)
     plt.title(column_name)
-    plt.xlabel('timestamps')
+    plt.xlabel('timestamps' if x_axis_column is None else x_axis_column)
     plt.ylabel(f"{column_name}  {unit}")
     plt.grid(True)
     plt.legend()
@@ -94,8 +103,8 @@ def plot_OCV_values(df, column_name, unit):
 
 
 plot_OCV_values(SOC_DATAFRAME, "OCV", "-")
-plot_OCV_values(SOC_DATAFRAME, "R", "(V)")
-plot_OCV_values(SOC_DATAFRAME, "R1", "(V)")
-plot_OCV_values(SOC_DATAFRAME, "C1", "(Coloumbina)")
-plot_OCV_values(SOC_DATAFRAME, "R2", "(V)")
-plot_OCV_values(SOC_DATAFRAME, "C2", "(Coloumbina)")
+#plot_OCV_values(SOC_DATAFRAME, "R", "(V)")
+#plot_OCV_values(SOC_DATAFRAME, "R1", "(V)")
+#plot_OCV_values(SOC_DATAFRAME, "C1", "(Coloumbina)")
+#plot_OCV_values(SOC_DATAFRAME, "R2", "(V)")
+#plot_OCV_values(SOC_DATAFRAME, "C2", "(Coloumbina)")
