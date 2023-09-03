@@ -1,7 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy import signal
 from scipy.integrate import cumtrapz
 
 def perform_integration(dataframe, column_to_manipulate, new_columnname, dt=0.5):
