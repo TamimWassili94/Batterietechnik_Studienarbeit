@@ -8,7 +8,7 @@ from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
                                 R, SOCsteps, R1, C1, R2, C2)
 
 
-batterydata = pd.read_csv('BatteryData_1.csv')
+Battery_Dataframe = pd.read_csv('BatteryData_1.csv')
 
 # Hinweis: Die hier erhaltenen extrapolierten Werte können von denen in Simulink abweichen.
 # Diese Abweichung ist auf die inhärenten Unterschiede in den mathematischen
@@ -53,24 +53,24 @@ def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
 
 # Für Temp werden gerade konstante Werte angenommen da es noch keine temperatursimulation gibt.
 SOC_DATAFRAME = pd.DataFrame({
-    'SOC': batterydata["SOC [%]"],
+    'SOC': Battery_Dataframe["SOC [%]"],
     'Temp': np.full(2361, 298.15),
-    'Zeit [s]': batterydata['Zeit [s]']
+    'Zeit [s]': Battery_Dataframe['Zeit [s]']
 })
 
-batterydata['OCV'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(soc_steps_ocv, temp_steps, ocv))
+Battery_Dataframe['OCV'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(soc_steps_ocv, temp_steps, ocv))
 
 #R ist bei konstanter Temperatur auch konstant
-batterydata['R'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R))
+Battery_Dataframe['R'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R))
 
 #R ist bei konstanter Temperatur auch konstant
-batterydata['R1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R1))
+Battery_Dataframe['R1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R1))
 
-batterydata['C1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C1))
+Battery_Dataframe['C1'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C1))
 
-batterydata['R2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R2))
+Battery_Dataframe['R2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, R2))
 
-batterydata['C2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C2))
+Battery_Dataframe['C2'] = SOC_DATAFRAME.apply(lookup_2d, axis=1, args=(SOCsteps, temp_steps, C2))
 
 def plot_OCV_values(df, column_name, unit, x_axis_column="Zeit [s]"):
     """
@@ -99,12 +99,12 @@ def plot_OCV_values(df, column_name, unit, x_axis_column="Zeit [s]"):
     plt.show()
 
 
-plot_OCV_values(batterydata, "OCV", "-")
-plot_OCV_values(batterydata, "R", "(V)")
-plot_OCV_values(batterydata, "R1", "(V)")
-plot_OCV_values(batterydata, "C1", "(Coloumbina)")
-plot_OCV_values(batterydata, "R2", "(V)")
-plot_OCV_values(batterydata, "C2", "(Coloumbina)")
+plot_OCV_values(Battery_Dataframe, "OCV", "-")
+plot_OCV_values(Battery_Dataframe, "R", "(V)")
+plot_OCV_values(Battery_Dataframe, "R1", "(V)")
+plot_OCV_values(Battery_Dataframe, "C1", "(Coloumbina)")
+plot_OCV_values(Battery_Dataframe, "R2", "(V)")
+plot_OCV_values(Battery_Dataframe, "C2", "(Coloumbina)")
 
 
-batterydata.to_csv('BatteryData_2.csv', index=False)
+Battery_Dataframe.to_csv('BatteryData_2.csv', index=False)
