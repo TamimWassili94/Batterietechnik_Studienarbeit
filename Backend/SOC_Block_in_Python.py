@@ -1,4 +1,4 @@
-from Matlab_dotmat_reader import df,x_title,y_title,plot_dataframe
+from Matlab_dotmat_reader import Battery_Dataframe,x_title,y_title,plot_dataframe
 from transfer_functions import perform_integration_rk4
 from Initial_Parameters import q_zelle, soc_init
 
@@ -20,7 +20,7 @@ def current_SOC(dataframe, q_max, initial_soc):
     soc_dataframe["SOC [%]"] = (initial_soc + soc_dataframe["Ladungsmenge[t]"]*constant_by_time).clip(0,100)
     return soc_dataframe
 
-Battery_Dataframe = kilowatt_to_watt_and_reverse(df,y_title)
+Battery_Dataframe = kilowatt_to_watt_and_reverse(Battery_Dataframe,y_title)
 Battery_Dataframe = watt_to_ampere(Battery_Dataframe, 45)
 Battery_Dataframe = perform_integration_rk4(Battery_Dataframe, "Strom [A]" , "Ladungsmenge[t]")
 Battery_Dataframe = current_SOC(Battery_Dataframe, q_zelle, soc_init)

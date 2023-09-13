@@ -70,7 +70,9 @@ def plot_dataframe(dataframe, x_column, y_column):
 
 
 # testen der angegebenen Funktionen - erfolgreich
-df = dotmat_to_pandas("Profile_1.mat")
-x_title,y_title = get_axis_titles(df)
+Battery_Dataframe = dotmat_to_pandas("Profile_1.mat")
+x_title,y_title = get_axis_titles(Battery_Dataframe)
+
+Battery_Dataframe.to_csv('BatteryData_0.csv', index=False)
 
 
