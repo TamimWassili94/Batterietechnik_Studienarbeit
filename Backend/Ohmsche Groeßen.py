@@ -79,7 +79,7 @@ def plot_single_element(x_axis, y_axis, title, unit):
     ax.legend()
     plt.show()
 
-plot_single_element('Zeit [s]', 'U_R [V]', 'Voltage', '[V]')
+plot_single_element('Zeit [s]', 'OCV', 'OCV', '[V]')
 
 
 def simulate_UR_n_and_IR_n_trapezoidal(Battery_Dataframe, Resistor_Row, Current_Row, Condensator_Row, Voltage_Str, Current_Str):

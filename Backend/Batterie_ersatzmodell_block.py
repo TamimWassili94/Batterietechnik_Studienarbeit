@@ -20,7 +20,9 @@ Battery_Dataframe = pd.read_csv('BatteryData_1.csv')
 def lookup_2d(row, SOC_breakpoints, Temp_breakpoints, table_data):
     SOC = row['SOC']
     Temp = row['Temp']
-
+    i = 0
+    print(i, SOC)
+    i += 1
     # Create grid and multivariate data points
     points = np.array([[t, s] for t in Temp_breakpoints for s in SOC_breakpoints])
     values = table_data.flatten()
