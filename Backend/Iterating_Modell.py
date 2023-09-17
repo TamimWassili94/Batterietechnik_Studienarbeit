@@ -183,6 +183,7 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init):
         U_list.append(U_1)
 
 
+
     Battery_Dataframe['Leistung [W]'] = watt_and_reverse_list
     Battery_Dataframe["elektrischer Strom [A]"] = ampere_list
     Battery_Dataframe["Ladungsmenge [C]"] = Ladungsmenge_list
