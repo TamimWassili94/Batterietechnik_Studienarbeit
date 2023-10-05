@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import griddata, interp1d
 
-from Initial_Parameters import q_zelle, soc_init
+from Initial_Parameters import q_zelle, Temperature
 from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
-                                R, SOCsteps, R1, C1, R2, C2)
+                                R, SOCsteps, R1, C1, R2, C2, DeltaOCVdT, SOCsteps_Takano,
+                                kA, cp, m)
 
 Battery_Dataframe = pd.read_csv('BatteryData_0.csv')
 
@@ -36,9 +37,9 @@ def calculating_SOC(ladungsmenge_list, index, q_zelle, SOC_init):
         SOC = 0
     return SOC
 
-def lookup_2d(soc_list, index , SOC_breakpoints, Temp_breakpoints, table_data):
+def lookup_2d(temperature, soc_list, index, SOC_breakpoints, Temp_breakpoints, table_data):
     SOC = soc_list[index]
-    Temp = 298.15
+    Temp = temperature
     # Create grid and multivariate data points
     points = np.array([[t, s] for t in Temp_breakpoints for s in SOC_breakpoints])
     values = table_data.flatten()
@@ -69,6 +70,25 @@ def lookup_2d(soc_list, index , SOC_breakpoints, Temp_breakpoints, table_data):
 
     return interp_val
 
+
+def lookup_1d(soc_list, index):
+    SOC = soc_list[index]
+
+    # Try to perform interpolation first
+    try:
+        interp_val = np.interp(SOC, SOCsteps_Takano, DeltaOCVdT)
+    except ValueError:
+        # If SOC is outside the range, extrapolate using nearest endpoints
+        if SOC < SOCsteps_Takano[0]:
+            slope = (DeltaOCVdT[1] - DeltaOCVdT[0]) / (SOCsteps_Takano[1] - SOCsteps_Takano[0])
+            interp_val = DeltaOCVdT[0] + slope * (SOC - SOCsteps_Takano[0])
+        else:
+            slope = (DeltaOCVdT[-1] - DeltaOCVdT[-2]) / (SOCsteps_Takano[-1] - SOCsteps_Takano[-2])
+            interp_val = DeltaOCVdT[-1] + slope * (SOC - SOCsteps_Takano[-1])
+
+    return interp_val
+
+
 def simulate_UR_n_and_IR_n_trapezoidal(R1, I_Zelle, C1, initial_output, prev_value3, dt=0.5):
     # Step 1: Divide output by R1
     Current = initial_output / R1 if R1 != 0 else 0
@@ -88,7 +108,41 @@ def simulate_UR_n_and_IR_n_trapezoidal(R1, I_Zelle, C1, initial_output, prev_val
 
     return initial_output, Current, prev_value3
 
-def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init):
+def calculate_irreversible_heat(Resistor, Resistor_1,Resistor_2, I_R, I_R1, I_R2):
+    q_irr_resistor = Resistor * I_R**2
+    q_irr_resistor_1 = Resistor_1 * I_R1**2
+    q_irr_resistor_2 = Resistor_2 * I_R2**2
+    return q_irr_resistor_1 + q_irr_resistor + q_irr_resistor_2
+
+def calculate_total_heat(Q_irr, Q_rev):
+    Q_rev_total = Q_rev * 13
+    Q_irr_total = Q_irr * 13
+    Q_total = Q_rev_total + Q_irr_total
+    Q_cell = Q_total / 13
+    return Q_total, Q_cell
+
+def calculate_temperature(init_temp ,heat_transfer_list, temp_list, q_cell, index, dt = 0.5):
+    T_list = temp_list
+    Q_list = heat_transfer_list
+
+    if not T_list:
+        deltaT = 0
+    elif len(T_list) == 1:
+        deltaT = T_list[index - 1] - init_temp
+    else:
+        deltaT = T_list[index - 1] - T_list[index - 2]
+    temperature_gradient = deltaT * kA
+    heat = temperature_gradient + q_cell
+    heat_transfer = heat / (m * cp)
+    Q_list.append(heat_transfer)
+    temp = trapezoidal_integration(heat_transfer_list, index, dt)
+    T_list.append(temp)
+    print(deltaT)
+    print(T_list, temp)
+    return T_list, Q_list
+
+
+def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initial_temperature):
     U_1 = initial_voltage
     U_list = []
     anzahl_an_zellen = 13
@@ -119,15 +173,27 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init):
     prev_value_R2 = 0
     dt = 0.5
 
+    Q_irr_list = []
+    Q_rev_list = []
+
+    Q_total_list = []
+    Q_cell_list = []
+
+    heat_transfer_list = []
+
+    temp = initial_temperature
+    temp_list = []
+
     for index, row in Battery_Dataframe.iterrows():
+        ## Berechnung der elektrischen Größen
         #Schritt 1: Umrechnung von kW in W und thermodynamische richtungsweisung
         watt = kilowatt_to_watt_and_reverse(row, 'Leistung [kW]')
         watt_and_reverse_list.append(watt)
 
         #Schritt 2: Umrechnung von Watt zu Ampere
         if len(voltage_list) == 0:
-            ampere = watt_to_ampere(watt, U_1)
-            ampere_list.append(ampere)
+            main_current = watt_to_ampere(watt, U_1)
+            ampere_list.append(main_current)
         else:
             ampere = watt_to_ampere(kilowatt_to_watt_and_reverse(watt, voltage_list[index]))
             ampere_list.append(ampere)
@@ -141,26 +207,26 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init):
         SOC_list.append(SOC)
 
         #Schritt 5: Berechnung der komponenten eines Batterieersatzmodells
-        Open_Circuit_Voltage =  lookup_2d(SOC_list, index, soc_steps_ocv, temp_steps, ocv)
+        Open_Circuit_Voltage =  lookup_2d(temp, SOC_list, index, soc_steps_ocv, temp_steps, ocv)
         Open_Circuit_Voltage_list.append(Open_Circuit_Voltage)
 
-        Resistor = lookup_2d(SOC_list, index, SOCsteps, temp_steps, R)
+        Resistor = lookup_2d(temp, SOC_list, index, SOCsteps, temp_steps, R)
         Resistor_list.append(Resistor)
 
-        Resistor1 = lookup_2d(SOC_list, index, SOCsteps, temp_steps, R1)
+        Resistor1 = lookup_2d(temp, SOC_list, index, SOCsteps, temp_steps, R1)
         Resistor1_list.append(Resistor1)
 
-        Resistor2 = lookup_2d(SOC_list, index, SOCsteps, temp_steps, R2)
+        Resistor2 = lookup_2d(temp, SOC_list, index, SOCsteps, temp_steps, R2)
         Resistor2_list.append(Resistor2)
 
-        Capacitor1 = lookup_2d(SOC_list, index, SOCsteps, temp_steps, C1)
+        Capacitor1 = lookup_2d(temp, SOC_list, index, SOCsteps, temp_steps, C1)
         Capacitor1_list.append(Capacitor1)
 
-        Capacitor2 = lookup_2d(SOC_list, index, SOCsteps, temp_steps, C2)
+        Capacitor2 = lookup_2d(temp, SOC_list, index, SOCsteps, temp_steps, C2)
         Capacitor2_list.append(Capacitor2)
 
         #Schritt 6: Berechnung von Spannungen und Strömen, bei gegebenen Ohmschen Größen
-        U_R = Resistor * ampere
+        U_R = Resistor * main_current
         U_R_list.append(U_R)
 
         U_R1, Current_R1, prev_value_R1 = simulate_UR_n_and_IR_n_trapezoidal(
@@ -183,6 +249,25 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init):
         U_list.append(U_1)
 
 
+        ## Berechnung der Wärmegrößen
+        #Schritt 1. Berechnung von Q_irr
+        Q_irr = calculate_irreversible_heat(Resistor, Resistor1, Resistor2, main_current, Current_R1, Current_R2)
+        Q_irr_list.append(Q_irr)
+
+        #Schritt 2. Berechnung von Q_rev
+        SOC_Takano_rev = lookup_1d(SOC_list, index)
+        Q_rev = SOC_Takano_rev * temp * main_current
+        Q_rev_list.append(Q_rev)
+
+        #Schritt 3. Berechnung der totalen Wärme und der Wärme pro Zelle
+        Q_total, Q_cell = calculate_total_heat(Q_irr, Q_rev)
+        Q_total_list.append(Q_total)
+        Q_cell_list.append(Q_cell)
+
+        #Schritt 4. Berechnung der Temperatur
+        temp_list, heat_transfer_list = calculate_temperature(
+            initial_temperature ,heat_transfer_list, temp_list, Q_cell, index
+        )
 
     Battery_Dataframe['Leistung [W]'] = watt_and_reverse_list
     Battery_Dataframe["elektrischer Strom [A]"] = ampere_list
@@ -200,9 +285,14 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init):
     Battery_Dataframe["I_R1 [A]"] = I_R1_list
     Battery_Dataframe["I_R2 [A]"] = I_R2_list
     Battery_Dataframe["U_Ges [V]"] = U_list
+    Battery_Dataframe["Q_irr [W]"] = Q_irr_list
+    Battery_Dataframe["Q_rev [W]"] = Q_rev_list
+    Battery_Dataframe["Q_total [W]"] = Q_total_list
+    Battery_Dataframe["Q_cell [W]"] = Q_cell_list
+    Battery_Dataframe["Temp [K]"] = temp_list
     return Battery_Dataframe
 
-Battery_Dataframe = iterating_battery_modell(Battery_Dataframe, 45, soc_init)
+Battery_Dataframe = iterating_battery_modell(Battery_Dataframe, 45, 60, Temperature)
 
 
 def plot(Dataframe, x_title, y_title):
@@ -245,3 +335,7 @@ plot(Battery_Dataframe, "Zeit [s]", "U_R1 [V]")
 plot_2_elements('Zeit [s]', 'U_R1 [V]', 'U_R2 [V]', 'Voltage', '[V]')
 plot_2_elements('Zeit [s]', 'I_R1 [A]', 'I_R2 [A]', 'Ampere', '[A]')
 plot(Battery_Dataframe, "Zeit [s]", "U_Ges [V]")
+plot(Battery_Dataframe, "Zeit [s]", "Q_irr [W]")
+plot(Battery_Dataframe, "Zeit [s]", "Q_rev [W]")
+plot(Battery_Dataframe, "Zeit [s]", "Q_cell [W]")
+plot(Battery_Dataframe, "Zeit [s]", "Temp [K]")

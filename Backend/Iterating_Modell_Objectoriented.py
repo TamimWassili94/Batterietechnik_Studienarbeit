@@ -46,71 +46,6 @@ class BatteryModel:
         self.u_r2_list = []
         self.i_r2_list = []
 
-    def process_row(self, index, row):
-        #Schritt 1: Umrechnung von kW in W und thermodynamische richtungsweisung
-        watt = self.kilowatt_to_watt_and_reverse(row, 'Leistung [kW]')
-        self.inverted_watt_list.append(watt)
-
-        # Schritt 2: Umrechnung von Watt zu Ampere
-        if len(self.main_voltage_list) == 0:
-            self.ampere = self.watt_to_ampere(watt, self.main_voltage)
-            self.main_current_list.append(self.ampere)
-        else:
-            voltage_to_use = self.main_voltage_list[
-                -1]  # or self.main_voltage_list[index] depending on your requirement
-            self.ampere = self.watt_to_ampere(watt, voltage_to_use)
-            self.main_current_list.append(self.ampere)
-
-        #Schritt 3: Umrechnung von Ampere zu Ladungsmenge (trapezoidal rule)
-        self.charge += self.trapezoidal_integration(self.main_current_list, index, self.dt)  # Pass ampere_list to integrate
-        self.main_charge_list.append(self.charge)
-
-        #Schritt 4: Berechnung vom SOC:
-        self.soc = self.calculating_SOC(self.main_charge_list, index, q_zelle, soc_init)
-        self.soc_list.append(self.soc)
-
-        #Schritt 5: Berechnung der komponenten eines Batterieersatzmodells
-        self.ocv =  self.lookup_2d(self.soc_list, index, soc_steps_ocv, temp_steps, ocv)
-        self.ocv_list.append(self.ocv)
-
-        self.r = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, R)
-        self.r_list.append(self.r)
-
-        self.r1 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, R1)
-        self.r1_list.append(self.r1)
-
-        self.r2 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, R2)
-        self.r2_list.append(self.r2)
-
-        self.c1 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, C1)
-        self.c1_list.append(self.c1)
-
-        self.c2 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, C2)
-        self.c2_list.append(self.c2)
-
-        #Schritt 6: Berechnung von Spannungen und Strömen, bei gegebenen Ohmschen Größen
-        self.u_r = self.r * self.ampere
-        self.u_r_list.append(self.u_r)
-
-        self.u_r1, self.i_r1, self.pre_r1 = self.simulate_UR_n_and_IR_n_trapezoidal(
-            self.r1_list[index], self.main_current_list[index], self.c1_list[index],
-            self.u_r1, self.pre_r1, dt=0.5)
-
-        self.u_r2, self.i_r2, self.pre_r2 = self.simulate_UR_n_and_IR_n_trapezoidal(
-            self.r2_list[index], self.main_current_list[index], self.c2_list[index],
-            self.u_r2, self.pre_r2, dt=0.5)
-
-        # Add the single outputs to your lists
-        self.u_r1_list.append(self.u_r1)
-        self.i_r1_list.append(self.i_r1)
-
-        self.u_r2_list.append(self.u_r2)
-        self.i_r2_list.append(self.i_r2)
-
-        #Schritt 7. Summieren der Spannungen um Spannung zu aktualisieren
-        self.main_voltage = (self.ocv + self.u_r + self.u_r1 + self.u_r2) * self.no_of_cells
-        self.main_voltage_list.append(self.main_voltage)
-
     def kilowatt_to_watt_and_reverse(self, row, y_column):
         return row[y_column] * -1000
 
@@ -193,6 +128,74 @@ class BatteryModel:
         for index, row in Battery_Dataframe.iterrows():
             self.process_row(index, row)
 
+
+
+        def process_row(self, index, row):
+            # Schritt 1: Umrechnung von kW in W und thermodynamische richtungsweisung
+            watt = self.kilowatt_to_watt_and_reverse(row, 'Leistung [kW]')
+            self.inverted_watt_list.append(watt)
+
+            # Schritt 2: Umrechnung von Watt zu Ampere
+            if len(self.main_voltage_list) == 0:
+                self.ampere = self.watt_to_ampere(watt, self.main_voltage)
+                self.main_current_list.append(self.ampere)
+            else:
+                voltage_to_use = self.main_voltage_list[
+                    -1]  # or self.main_voltage_list[index] depending on your requirement
+                self.ampere = self.watt_to_ampere(watt, voltage_to_use)
+                self.main_current_list.append(self.ampere)
+
+            # Schritt 3: Umrechnung von Ampere zu Ladungsmenge (trapezoidal rule)
+            self.charge += self.trapezoidal_integration(self.main_current_list, index,
+                                                        self.dt)  # Pass ampere_list to integrate
+            self.main_charge_list.append(self.charge)
+
+            # Schritt 4: Berechnung vom SOC:
+            self.soc = self.calculating_SOC(self.main_charge_list, index, q_zelle, soc_init)
+            self.soc_list.append(self.soc)
+
+            # Schritt 5: Berechnung der komponenten eines Batterieersatzmodells
+            self.ocv = self.lookup_2d(self.soc_list, index, soc_steps_ocv, temp_steps, ocv)
+            self.ocv_list.append(self.ocv)
+
+            self.r = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, R)
+            self.r_list.append(self.r)
+
+            self.r1 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, R1)
+            self.r1_list.append(self.r1)
+
+            self.r2 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, R2)
+            self.r2_list.append(self.r2)
+
+            self.c1 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, C1)
+            self.c1_list.append(self.c1)
+
+            self.c2 = self.lookup_2d(self.soc_list, index, SOCsteps, temp_steps, C2)
+            self.c2_list.append(self.c2)
+
+            # Schritt 6: Berechnung von Spannungen und Strömen, bei gegebenen Ohmschen Größen
+            self.u_r = self.r * self.ampere
+            self.u_r_list.append(self.u_r)
+
+            self.u_r1, self.i_r1, self.pre_r1 = self.simulate_UR_n_and_IR_n_trapezoidal(
+                self.r1_list[index], self.main_current_list[index], self.c1_list[index],
+                self.u_r1, self.pre_r1, dt=0.5)
+
+            self.u_r2, self.i_r2, self.pre_r2 = self.simulate_UR_n_and_IR_n_trapezoidal(
+                self.r2_list[index], self.main_current_list[index], self.c2_list[index],
+                self.u_r2, self.pre_r2, dt=0.5)
+
+            # Add the single outputs to your lists
+            self.u_r1_list.append(self.u_r1)
+            self.i_r1_list.append(self.i_r1)
+
+            self.u_r2_list.append(self.u_r2)
+            self.i_r2_list.append(self.i_r2)
+
+            # Schritt 7. Summieren der Spannungen um Spannung zu aktualisieren
+            self.main_voltage = (self.ocv + self.u_r + self.u_r1 + self.u_r2) * self.no_of_cells
+            self.main_voltage_list.append(self.main_voltage)
+
         Battery_Dataframe['Leistung [W]'] = self.inverted_watt_list
         Battery_Dataframe["elektrischer Strom [A]"] = self.main_current_list
         Battery_Dataframe["Ladungsmenge [C]"] = self.main_charge_list
@@ -214,6 +217,7 @@ class BatteryModel:
 
 battery_model = BatteryModel(45, soc_init)
 Battery_Dataframe = battery_model.iterate_model(Battery_Dataframe)
+
 
 
 def plot(Dataframe, x_title, y_title):
