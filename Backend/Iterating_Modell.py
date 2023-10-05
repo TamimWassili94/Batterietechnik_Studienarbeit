@@ -121,25 +121,29 @@ def calculate_total_heat(Q_irr, Q_rev):
     Q_cell = Q_total / 13
     return Q_total, Q_cell
 
-def calculate_temperature(init_temp ,heat_transfer_list, temp_list, q_cell, index, dt = 0.5):
-    T_list = temp_list
-    Q_list = heat_transfer_list
 
-    if not T_list:
-        deltaT = 0
-    elif len(T_list) == 1:
-        deltaT = T_list[index - 1] - init_temp
-    else:
-        deltaT = T_list[index - 1] - T_list[index - 2]
-    temperature_gradient = deltaT * kA
-    heat = temperature_gradient + q_cell
-    heat_transfer = heat / (m * cp)
-    Q_list.append(heat_transfer)
-    temp = trapezoidal_integration(heat_transfer_list, index, dt)
-    T_list.append(temp)
-    print(deltaT)
-    print(T_list, temp)
-    return T_list, Q_list
+def calculate_temperature(init_temp, heat_transfer_list, temp_list, q_cell, index, dt=0.5):
+    # For the unit delay, if index is 0 (or if the list is empty), use init_temp. Otherwise, use the last value in temp_list.
+    unit_delay = init_temp if index == 0 or not temp_list else temp_list[-1]
+
+    # Difference Block
+    delta_temp = init_temp - unit_delay
+
+    # Gain kA
+    a = delta_temp * kA
+
+    # Sum Block
+    b = a + q_cell
+
+    # Division to get c
+    c = b / (m * cp)
+
+    # Integrator Block - Simple Euler Integration
+    new_temp = unit_delay + c * dt
+
+    temp_list.append(new_temp)
+
+    return temp_list, heat_transfer_list
 
 
 def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initial_temperature):
@@ -268,6 +272,7 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initi
         temp_list, heat_transfer_list = calculate_temperature(
             initial_temperature ,heat_transfer_list, temp_list, Q_cell, index
         )
+        temp = initial_temperature
 
     Battery_Dataframe['Leistung [W]'] = watt_and_reverse_list
     Battery_Dataframe["elektrischer Strom [A]"] = ampere_list
