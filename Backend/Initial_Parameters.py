@@ -1,6 +1,6 @@
 import numpy as np
 
-soc_init = 10
+soc_init = 60
 q_zelle = 5.6 #[Ah]
 I_ZELLE = -1 #[A]
 Temperature = 298.15 #[K]

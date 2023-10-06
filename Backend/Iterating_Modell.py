@@ -272,7 +272,7 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initi
         temp_list, heat_transfer_list = calculate_temperature(
             initial_temperature ,heat_transfer_list, temp_list, Q_cell, index
         )
-        temp = initial_temperature
+        temp = temp_list[-1]
 
     Battery_Dataframe['Leistung [W]'] = watt_and_reverse_list
     Battery_Dataframe["elektrischer Strom [A]"] = ampere_list
@@ -344,3 +344,25 @@ plot(Battery_Dataframe, "Zeit [s]", "Q_irr [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_rev [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_cell [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Temp [K]")
+
+def visualize_lookup_2d(Temp_breakpoints, SOC_breakpoints, table_data):
+    # Create meshgrid from breakpoints
+    SOC_grid, Temp_grid = np.meshgrid(SOC_breakpoints, Temp_breakpoints)
+
+    # Create a figure
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Plot the surface
+    ax.plot_surface(SOC_grid, Temp_grid, table_data, cmap='viridis', edgecolor='k')
+
+    # Set labels
+    ax.set_xlabel('SOC')
+    ax.set_ylabel('Temperature')
+    ax.set_zlabel('Value')
+    ax.set_title('2D Lookup Table Visualization')
+
+    plt.show()
+
+# Assuming temp_steps, SOCsteps, and R2 are already defined in your environment
+visualize_lookup_2d(temp_steps, SOCsteps, R2)
