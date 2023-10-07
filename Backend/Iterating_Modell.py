@@ -269,10 +269,10 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initi
         Q_cell_list.append(Q_cell)
 
         #Schritt 4. Berechnung der Temperatur
-        temp_list, heat_transfer_list = calculate_temperature(
-            initial_temperature ,heat_transfer_list, temp_list, Q_cell, index
-        )
-        temp = temp_list[-1]
+        #temp_list, heat_transfer_list = calculate_temperature(
+        #    initial_temperature ,heat_transfer_list, temp_list, Q_cell, index
+        #)
+        #temp = temp_list[-1]
 
     Battery_Dataframe['Leistung [W]'] = watt_and_reverse_list
     Battery_Dataframe["elektrischer Strom [A]"] = ampere_list
@@ -294,7 +294,7 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initi
     Battery_Dataframe["Q_rev [W]"] = Q_rev_list
     Battery_Dataframe["Q_total [W]"] = Q_total_list
     Battery_Dataframe["Q_cell [W]"] = Q_cell_list
-    Battery_Dataframe["Temp [K]"] = temp_list
+    #Battery_Dataframe["Temp [K]"] = temp_list
     return Battery_Dataframe
 
 Battery_Dataframe = iterating_battery_modell(Battery_Dataframe, 45, 60, Temperature)
@@ -343,7 +343,7 @@ plot(Battery_Dataframe, "Zeit [s]", "U_Ges [V]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_irr [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_rev [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_cell [W]")
-plot(Battery_Dataframe, "Zeit [s]", "Temp [K]")
+#plot(Battery_Dataframe, "Zeit [s]", "Temp [K]")
 
 def visualize_lookup_2d(Temp_breakpoints, SOC_breakpoints, table_data):
     # Create meshgrid from breakpoints

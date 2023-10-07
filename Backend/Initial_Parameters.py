@@ -3,7 +3,7 @@ import numpy as np
 soc_init = 60
 q_zelle = 5.6 #[Ah]
 I_ZELLE = -1 #[A]
-Temperature = 298.15 #[K]
+Temperature = 313 #[K]
 Steptime = 1
 
 # SOC steps [%]
