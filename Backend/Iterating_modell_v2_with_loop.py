@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import griddata, interp1d
-from scipy.integrate import odeint
 
 from Initial_Parameters import q_zelle, Temperature, soc_init
 from Initial_Parameters import (soc_steps_ocv, ocv, temp_steps,
@@ -115,10 +114,19 @@ Battery_Dataframe['I_R1 [A]'] = 0.0
 Battery_Dataframe['U_R2 [V]'] = 0.0
 Battery_Dataframe['I_R2 [A]'] = 0.0
 Battery_Dataframe['Q_Irrev [W]'] = 0
+Battery_Dataframe["Q_Sum_Cell [W]"] = 0
 
 Battery_Dataframe['U_ges [V]'] = 0.0
 init_volt = 3.6 * 13
 Battery_Dataframe.at[0, 'U_ges [V]'] = init_volt
+
+# Init
+Battery_Dataframe['Temperatur [K]'] = Temperature
+
+Battery_Dataframe['Output Temperature [K]'] = np.nan  # Initialize a new column for the output temperatures
+Battery_Dataframe.at[0, 'Output Temperature [K]'] = Temperature
+
+output_temperature_delayed = Temperature
 
 for i in range(1, len(t)):
 
@@ -147,8 +155,7 @@ for i in range(1, len(t)):
 
     # Step 5: Calculate Ohmic Quantities
 
-    # Set the current temperature
-    Battery_Dataframe.at[i, 'Temperatur [K]'] = Temperature
+
 
     # 5.1: Calculate OCV
 
@@ -253,11 +260,10 @@ for i in range(1, len(t)):
     # Use the current value as the init_volt for the next cycle
     init_volt = U_ges_current
 
-
     # Calculate Q_Irrev components based on the provided formulas
-    Q_R = Battery_Dataframe.at[i, 'R [Ohm]'] * (Battery_Dataframe.at[i, 'Current [A]']**2)
-    Q_R1 = Battery_Dataframe.at[i, 'R1 [Ohm]'] * (Battery_Dataframe.at[i, 'I_R1 [A]']**2)
-    Q_R2 = Battery_Dataframe.at[i, 'R2 [Ohm]'] * (Battery_Dataframe.at[i, 'I_R2 [A]']**2)
+    Q_R = Battery_Dataframe.at[i, 'R [Ohm]'] * (Battery_Dataframe.at[i, 'Current [A]'] ** 2)
+    Q_R1 = Battery_Dataframe.at[i, 'R1 [Ohm]'] * (Battery_Dataframe.at[i, 'I_R1 [A]'] ** 2)
+    Q_R2 = Battery_Dataframe.at[i, 'R2 [Ohm]'] * (Battery_Dataframe.at[i, 'I_R2 [A]'] ** 2)
 
     # Sum the components to compute Q_Irrev
     Q_Irrev = Q_R + Q_R1 + Q_R2
@@ -268,34 +274,59 @@ for i in range(1, len(t)):
     SOC_current = Battery_Dataframe.at[i, 'SOC [%]']
     Battery_Dataframe.at[i, "Delta OCV [V]"] = lookup_1d(SOC_current, SOCsteps_Takano, DeltaOCVdT)
 
-
     ### Here debugging
     Battery_Dataframe.at[i, "Q_Rev [W]"] = (Battery_Dataframe.at[i, 'Temperatur [K]'] *
                                             Battery_Dataframe.at[i, 'Current [A]'] *
-                                            SOC_current)
+                                            Battery_Dataframe.at[i, "Delta OCV [V]"])
 
     Battery_Dataframe.at[i, "Q_Cell [W]"] = (Battery_Dataframe.at[i, "Q_Rev [W]"] +
-                                             Battery_Dataframe.at[i, 'Q_Irrev [W]']) * 13
+                                             Battery_Dataframe.at[i, 'Q_Irrev [W]'])
+
+    Battery_Dataframe.at[i, "Q_Sum_Cell [W]"] = Battery_Dataframe.at[i, "Q_Cell [W]"] * 13
+
+    # Fetch the current temperature
+    current_temperature = Battery_Dataframe.at[i, 'Temperatur [K]']
+    print(f"Current Temperature at i={i}: {current_temperature}")
+
+    # Calculate deltaT
+    deltaT = current_temperature - output_temperature_delayed
+
+    deltaQ = kA * deltaT
+
+    sumQ = deltaQ + Battery_Dataframe.at[i, "Q_Cell [W]"]
+    dQ = sumQ / (m*cp)
+
+    # Compute the new "output" temperature based on deltaT
+    new_output_temperature = Battery_Dataframe.at[i - 1, 'Output Temperature [K]'] + dQ * delta_t
+
+    # Store this "output" temperature
+    Battery_Dataframe.at[i, 'Output Temperature [K]'] = new_output_temperature
+
+    # Update the "output temperature" value for the next iteration
+    output_temperature_delayed = new_output_temperature
 
 
-plot(Battery_Dataframe, "Zeit [s]", 'Leistung [W]')
-plot(Battery_Dataframe, "Zeit [s]", 'Current [A]')
-plot(Battery_Dataframe, "Zeit [s]", 'Charge [C]')
-plot(Battery_Dataframe, "Zeit [s]", 'SOC [%]')
-plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
-plot(Battery_Dataframe, "Zeit [s]", 'R [Ohm]')
-plot(Battery_Dataframe, "Zeit [s]", 'R1 [Ohm]')
-plot(Battery_Dataframe, "Zeit [s]", 'R2 [Ohm]')
-plot(Battery_Dataframe, "Zeit [s]", 'C1 [Ohm]')
-plot(Battery_Dataframe, "Zeit [s]", 'C2 [Ohm]')
-plot(Battery_Dataframe, "Zeit [s]", 'U_R [V]')
-plot(Battery_Dataframe, "Zeit [s]", 'U_R1 [V]')
-plot(Battery_Dataframe, "Zeit [s]", 'I_R1 [A]')
-plot(Battery_Dataframe, "Zeit [s]", 'U_R2 [V]')
-plot(Battery_Dataframe, "Zeit [s]", 'I_R2 [A]')
-plot(Battery_Dataframe, "Zeit [s]", 'U_ges [V]')
-plot(Battery_Dataframe, "Zeit [s]", 'Q_Irrev [W]')
-plot(Battery_Dataframe, "Zeit [s]", "Delta OCV [V]")
+
+#plot(Battery_Dataframe, "Zeit [s]", 'Leistung [W]')
+#plot(Battery_Dataframe, "Zeit [s]", 'Current [A]')
+#plot(Battery_Dataframe, "Zeit [s]", 'Charge [C]')
+#plot(Battery_Dataframe, "Zeit [s]", 'SOC [%]')
+#plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
+#plot(Battery_Dataframe, "Zeit [s]", 'R [Ohm]')
+#plot(Battery_Dataframe, "Zeit [s]", 'R1 [Ohm]')
+#plot(Battery_Dataframe, "Zeit [s]", 'R2 [Ohm]')
+#plot(Battery_Dataframe, "Zeit [s]", 'C1 [Ohm]')
+#plot(Battery_Dataframe, "Zeit [s]", 'C2 [Ohm]')
+#plot(Battery_Dataframe, "Zeit [s]", 'U_R [V]')
+#plot(Battery_Dataframe, "Zeit [s]", 'U_R1 [V]')
+#plot(Battery_Dataframe, "Zeit [s]", 'I_R1 [A]')
+#plot(Battery_Dataframe, "Zeit [s]", 'U_R2 [V]')
+#plot(Battery_Dataframe, "Zeit [s]", 'I_R2 [A]')
+#plot(Battery_Dataframe, "Zeit [s]", 'U_ges [V]')
+#plot(Battery_Dataframe, "Zeit [s]", 'Q_Irrev [W]')
+#plot(Battery_Dataframe, "Zeit [s]", "Delta OCV [V]")
 plot(Battery_Dataframe, "Zeit [s]", 'Temperatur [K]')
+plot(Battery_Dataframe, "Zeit [s]", 'Output Temperature [K]')
+plot(Battery_Dataframe, "Zeit [s]", "Q_Irrev [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_Rev [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_Cell [W]")

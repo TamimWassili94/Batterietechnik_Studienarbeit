@@ -1,9 +1,9 @@
 import numpy as np
 
-soc_init = 60
+soc_init = 10
 q_zelle = 5.6 #[Ah]
 I_ZELLE = -1 #[A]
-Temperature = 313 #[K]
+Temperature = 293.15 #[K]
 Steptime = 1
 
 # SOC steps [%]
