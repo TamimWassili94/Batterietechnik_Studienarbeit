@@ -69,10 +69,12 @@ def plot_dataframe(dataframe, x_column, y_column):
     plt.show()
 
 
-# testen der angegebenen Funktionen - erfolgreich
+# testen der angegebenen Funktionen - erfolgreich in klammer dateinamen eingeben des profils
+# Das profil muss im gleichen ordner sein wie die .py dateien.
 Battery_Dataframe = dotmat_to_pandas("Profile_1.mat")
 x_title,y_title = get_axis_titles(Battery_Dataframe)
 
+# .pys arbeiten indem sie das Datafram von .csv ablesen
 Battery_Dataframe.to_csv('BatteryData_0.csv', index=False)
 
 
