@@ -36,7 +36,7 @@ u_zelle = init_volt
 
 end_time = len(time)
 
-for i in range(1, end_time):
+for i, row in Battery_Dataframe.iloc[1:].iterrows():
     #Nebenberechnung um den fortschritt der Berechnung anzuzeigen
     progress = (i / end_time) * 100
     print('\rVerarbeitet: {:.2f}%'.format(progress), end='')
@@ -147,7 +147,7 @@ for i in range(1, end_time):
     u_r2 = u_r2_prev + differenzial_u_r2 * dt                                   #Integratorblock
     Battery_Dataframe.at[i, 'U_R2 [V]'] = u_r2                                  #Einspeisen in das Dataframe
 
-    # 6.9 Berecchnung der gesamten Zellspannung
+    # 6.9 Berechnung der gesamten Zellspannung
     u_zelle = (
             Battery_Dataframe.at[i, 'U_R1 [V]'] +
             Battery_Dataframe.at[i, 'U_R2 [V]'] +
