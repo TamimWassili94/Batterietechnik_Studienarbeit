@@ -21,4 +21,3 @@ for index, row in df.iloc[1:].iterrows():
     # Aktualisiert den Wert im DataFrame
     df.at[index, 'Wert'] = aktueller_wert
 
-print("Simulation beendet.")

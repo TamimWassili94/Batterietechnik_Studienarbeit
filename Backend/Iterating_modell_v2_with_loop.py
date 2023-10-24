@@ -221,3 +221,5 @@ plot(Battery_Dataframe, "Zeit [s]", 'Output Temperature [K]')
 plot(Battery_Dataframe, "Zeit [s]", "Q_Irrev [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_Rev [W]")
 plot(Battery_Dataframe, "Zeit [s]", "Q_Cell [W]")
+
+Battery_Dataframe.to_csv('BatteryData_Output.csv', index=False)
