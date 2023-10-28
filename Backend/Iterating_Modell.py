@@ -188,7 +188,7 @@ def iterating_battery_modell(Battery_Dataframe, initial_voltage, soc_init, initi
     temp = initial_temperature
     temp_list = []
 
-    for index, row in Battery_Dataframe.iterrows():
+    for index, row in Battery_Dataframe.head(100).iterrows():
         ## Berechnung der elektrischen Größen
         #Schritt 1: Umrechnung von kW in W und thermodynamische richtungsweisung
         watt = kilowatt_to_watt_and_reverse(row, 'Leistung [kW]')

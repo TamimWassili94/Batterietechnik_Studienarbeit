@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
 
-from Functions_To_Call import plot, lookup_1d, lookup_2d
+from Functions_To_Call import plot, lookup_1d, lookup_2d_v2
 print(f'Funtions_To_Call initialisiert')
+
 from Initial_Parameters import init_volt, init_q_zelle, init_temp, init_soc, kA, cp, m, anzahl_zellen
 print(f'Initial_Parameters Initialisiert')
+
 from Time_Tables import (soc_steps_ocv, ocv, temp_steps,
                                 R, SOCsteps, R1, C1, R2, C2, DeltaOCVdT, SOCsteps_Takano)
 print(f'Time_Tables Initialisiert')
@@ -25,7 +27,7 @@ Battery_Dataframe["Q_Sum_Cell [W]"] = 0
 Battery_Dataframe['U_ges [V]'] = 0.0
 Battery_Dataframe.at[0, 'U_ges [V]'] = init_volt
 Battery_Dataframe['Temperatur [K]'] = init_temp
-Battery_Dataframe['Output Temperature [K]'] = np.nan
+Battery_Dataframe['Output Temperature [K]'] = init_temp
 Battery_Dataframe.at[0, 'Output Temperature [K]'] = init_temp
 
 # Assuming t is a column in Battery_Dataframe
@@ -37,7 +39,6 @@ u_zelle = init_volt
 end_time = len(time)
 
 for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
-
     #Nebenberechnung um den fortschritt der Berechnung anzuzeigen
     progress = (i / end_time) * 100
     print('\rVerarbeitet: {:.2f}%'.format(progress), end='')
@@ -72,41 +73,35 @@ for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
     # 5.1: 2-D Lookup Interpolation vom OCV [V]
     string_ocv = 'OCV [V]'
     # Aufrufen der Funktion
-    subset_df = Battery_Dataframe.iloc[[i]].reset_index(drop=True)
-    subset_df = lookup_2d(subset_df, soc_steps_ocv, temp_steps, ocv)
-    Battery_Dataframe.at[i, string_ocv] = subset_df.at[0, 'Interpolated Value']
+    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, soc_steps_ocv, temp_steps, ocv)
+    Battery_Dataframe.at[i, string_ocv] = interpolated_value
 
     # 5.2: 2-D Lookup Interpolation von R [Ohm]
     string_R = 'R [Ohm]'
     # Aufrufen der Funktion
-    subset_df = Battery_Dataframe.iloc[[i]].reset_index(drop=True)
-    subset_df = lookup_2d(subset_df, SOCsteps, temp_steps, R)
-    Battery_Dataframe.at[i, string_R] = subset_df.at[0, 'Interpolated Value']
+    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R)
+    Battery_Dataframe.at[i, string_R] = interpolated_value
 
     # 5.3: 2-D Lookup Interpolation von R1 [Ohm]
     string_R1 = 'R1 [Ohm]'
     # Aufrufen der Funktion
-    subset_df = Battery_Dataframe.iloc[[i]].reset_index(drop=True)
-    subset_df = lookup_2d(subset_df, SOCsteps, temp_steps, R1)
-    Battery_Dataframe.at[i, string_R1] = subset_df.at[0, 'Interpolated Value']
+    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R1)
+    Battery_Dataframe.at[i, string_R1] = interpolated_value
 
     # 5.4: 2-D Lookup Interpolation von R2 [Ohm]
     string_R2 = 'R2 [Ohm]'
-    subset_df = Battery_Dataframe.iloc[[i]].reset_index(drop=True)
-    subset_df = lookup_2d(subset_df, SOCsteps, temp_steps, R2)
-    Battery_Dataframe.at[i, string_R2] = subset_df.at[0, 'Interpolated Value']
+    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R2)
+    Battery_Dataframe.at[i, string_R2] = interpolated_value
 
     # 5.5: 2-D Lookup Interpolation von C1 [C]
     string_C1 = 'C1 [C]'
-    subset_df = Battery_Dataframe.iloc[[i]].reset_index(drop=True)
-    subset_df = lookup_2d(subset_df, SOCsteps, temp_steps, C1)
-    Battery_Dataframe.at[i, string_C1] = subset_df.at[0, 'Interpolated Value']
+    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, C1)
+    Battery_Dataframe.at[i, string_C1] = interpolated_value
 
     # 5.6: 2-D Lookup Interpolation von C2 [C]
     string_C2 = 'C2 [C]'
-    subset_df = Battery_Dataframe.iloc[[i]].reset_index(drop=True)
-    subset_df = lookup_2d(subset_df, SOCsteps, temp_steps, C2)
-    Battery_Dataframe.at[i, string_C2] = subset_df.at[0, 'Interpolated Value']
+    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, C2)
+    Battery_Dataframe.at[i, string_C2] = interpolated_value
 
     # Schritt 6: Berechnung der Spannung
     # 6.1: Berechnung der Spannung U_R [V]
@@ -202,25 +197,25 @@ print('\nSimulation abgeschlossen!')
 #plot(Battery_Dataframe, "Zeit [s]", 'Leistung [W]')
 #plot(Battery_Dataframe, "Zeit [s]", 'Current [A]')
 #plot(Battery_Dataframe, "Zeit [s]", 'Charge [C]')
-plot(Battery_Dataframe.head(100), "Zeit [s]", 'SOC [%]')
+#plot(Battery_Dataframe, "Zeit [s]", 'SOC [%]')
 #plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'R [Ohm]')
 #plot(Battery_Dataframe, "Zeit [s]", 'R1 [Ohm]')
-#plot(Battery_Dataframe, "Zeit [s]", 'R2 [Ohm]')
+plot(Battery_Dataframe, "Zeit [s]", 'R2 [Ohm]')
 #plot(Battery_Dataframe, "Zeit [s]", 'C1 [Ohm]')
-plot(Battery_Dataframe.head(100), "Zeit [s]", 'C2 [C]')
+#plot(Battery_Dataframe, "Zeit [s]", 'C2 [Ohm]')
 #plot(Battery_Dataframe, "Zeit [s]", 'U_R [V]')
-#plot(Battery_Dataframe, "Zeit [s]", 'U_R1 [V]')
+plot(Battery_Dataframe.head(100), "Zeit [s]", 'U_R1 [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'I_R1 [A]')
 #plot(Battery_Dataframe, "Zeit [s]", 'U_R2 [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'I_R2 [A]')
-#plot(Battery_Dataframe, "Zeit [s]", 'U_ges [V]')
+plot(Battery_Dataframe.head(100), "Zeit [s]", 'U_ges [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'Q_Irrev [W]')
 #plot(Battery_Dataframe, "Zeit [s]", "Delta OCV [V]")
-plot(Battery_Dataframe.head(100), "Zeit [s]", 'Temperatur [K]')
+#plot(Battery_Dataframe, "Zeit [s]", 'Temperatur [K]')
 plot(Battery_Dataframe.head(100), "Zeit [s]", 'Output Temperature [K]')
-plot(Battery_Dataframe.head(100), "Zeit [s]", "Q_Irrev [W]")
-plot(Battery_Dataframe.head(100), "Zeit [s]", "Q_Rev [W]")
-plot(Battery_Dataframe.head(100), "Zeit [s]", "Q_Cell [W]")
+#plot(Battery_Dataframe, "Zeit [s]", "Q_Irrev [W]")
+#plot(Battery_Dataframe, "Zeit [s]", "Q_Rev [W]")
+#plot(Battery_Dataframe, "Zeit [s]", "Q_Cell [W]")
 
 Battery_Dataframe.to_csv('BatteryData_Output.csv', index=False)
