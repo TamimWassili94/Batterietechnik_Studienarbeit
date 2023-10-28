@@ -9,7 +9,7 @@ from Time_Tables import (soc_steps_ocv, ocv, temp_steps,
                                 R, SOCsteps, R1, C1, R2, C2, DeltaOCVdT, SOCsteps_Takano)
 print(f'Time_Tables Initialisiert')
 
-Battery_Dataframe = pd.read_csv('BatteryData_0.csv')
+Battery_Dataframe = pd.read_csv('BatteryData_1.csv')
 
 # 1. Pre-allocate columns with default values
 Battery_Dataframe['Leistung [W]'] = 0

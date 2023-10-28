@@ -3,28 +3,6 @@ import pandas as pd
 import scipy.io
 
 
-def scipytopandasconverter(scipydata):
-    """
-    Konvertiert scipy .mat Daten zu einem Pandas DataFrame.
-
-    Args:
-    - scipydata (dict): Daten geladen aus einer .mat Datei mittels scipy.
-
-    Returns:
-    - dataframe (pd.DataFrame): Konvertierte Daten als Pandas DataFrame.
-    """
-    # Initialisieren des DataFrames mit den Daten aus 'A'
-    dataframe = pd.DataFrame(scipydata['A'])
-
-    # Umbenennen der Indexes für bessere Lesbarkeit
-    dataframe = dataframe.rename(index={0: 'Zeit [s]', 1: 'Leistung [kW]'})
-
-    # Transponieren des DataFrames, sodass die Spalten und Zeilen vertauscht werden
-    dataframe = dataframe.transpose()
-
-    return dataframe
-
-
 def dotmat_to_pandas(dateiname):
     """
     Lädt und konvertiert .mat Datei zu einem Pandas DataFrame.
@@ -46,10 +24,18 @@ def dotmat_to_pandas(dateiname):
         # Lädt die .mat Datei mittels scipy
         scipydata = scipy.io.loadmat(dateiname)
 
-        # Konvertiert die geladenen Daten zu einem Pandas DataFrame
-        dataframe = scipytopandasconverter(scipydata)
+        # Initialisieren des DataFrames mit den Daten aus 'A'
+        dataframe = pd.DataFrame(scipydata['A'])
 
-        print('dataframe wurde erfolgreich initialisiert')
+        # Umbenennen der Indexes für bessere Lesbarkeit
+        dataframe = dataframe.rename(index={0: 'Zeit [s]', 1: 'Leistung [kW]'})
+
+        # Transponieren des DataFrames, sodass die Spalten und Zeilen vertauscht werden
+        dataframe = dataframe.transpose()
+
+        Battery_Dataframe.to_csv('BatteryData_1.csv', index=False)
+
+        print('dataframe wurde erfolgreich initialisiert ung gespeichert')
     else:
         raise ValueError(f"Nicht unterstütztes Dateiformat '{file_extension}'. Bitte stellen Sie einen Pfad für die "
                          f".mat-Datei bereit, um sie zu initialisieren.")

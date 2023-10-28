@@ -1,4 +1,4 @@
-from Matlab_dotmat_reader import Battery_Dataframe,x_title,y_title,plot_dataframe
+from Dotmat_to_CSV_Converter import Battery_Dataframe,x_title,y_title,plot_dataframe
 from transfer_functions import perform_integration_rk4
 from Initial_Parameters import q_zelle, soc_init
 
