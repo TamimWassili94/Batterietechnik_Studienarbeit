@@ -25,15 +25,9 @@ def dotmat_to_pandas(dateiname):
         scipydata = scipy.io.loadmat(dateiname)
 
         # Initialisieren des DataFrames mit den Daten aus 'A'
-        dataframe = pd.DataFrame(scipydata['A'])
+        dataframe = pd.DataFrame(scipydata['Charge'])
 
-        # Umbenennen der Indexes für bessere Lesbarkeit
-        dataframe = dataframe.rename(index={0: 'Zeit [s]', 1: 'Leistung [kW]'})
-
-        # Transponieren des DataFrames, sodass die Spalten und Zeilen vertauscht werden
-        dataframe = dataframe.transpose()
-
-        Battery_Dataframe.to_csv('BatteryData_1.csv', index=False)
+        dataframe.to_csv('Charge_Simulink.csv', index=False)
 
         print('dataframe wurde erfolgreich initialisiert ung gespeichert')
     else:
@@ -45,9 +39,8 @@ def dotmat_to_pandas(dateiname):
 
 # testen der angegebenen Funktionen - erfolgreich in klammer dateinamen eingeben des profils
 # Das profil muss im gleichen ordner sein wie die .py dateien.
-Battery_Dataframe = dotmat_to_pandas("Profile_1.mat")
+Battery_Dataframe = dotmat_to_pandas("Charge_Simulink.mat")
 
-# .pys arbeiten indem sie das Datafram von .csv ablesen
-Battery_Dataframe.to_csv('BatteryData_1.csv', index=False)
+
 
 

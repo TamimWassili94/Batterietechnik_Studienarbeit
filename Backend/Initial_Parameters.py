@@ -1,8 +1,9 @@
-init_volt = 3.6 * 13
-init_soc = 10
+anzahl_zellen = 13  #[-]
+init_volt = 3.6 * anzahl_zellen #[V]
+init_soc = 30 #[%]
 init_q_zelle = 5.6 #[Ah]
-init_temp = 293.15 #[K]
-anzahl_zellen = 13
+init_temp = 313.15 #[K]
+
 
 # Thermische Parameter
 m = 0.2147

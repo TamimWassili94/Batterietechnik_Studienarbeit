@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from Functions_To_Call import plot, lookup_1d, lookup_2d_v2
+from Functions_To_Call import plot, lookup_1d, lookup_2d_v2, lookup_2d_v3, integrator
 print(f'Funtions_To_Call initialisiert')
 
 from Initial_Parameters import init_volt, init_q_zelle, init_temp, init_soc, kA, cp, m, anzahl_zellen
@@ -38,10 +38,12 @@ u_zelle = init_volt
 
 end_time = len(time)
 
-for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
+for i, row in Battery_Dataframe.iloc[1:].iterrows():
     #Nebenberechnung um den fortschritt der Berechnung anzuzeigen
     progress = (i / end_time) * 100
     print('\rVerarbeitet: {:.2f}%'.format(progress), end='')
+
+    dt = time[i] - time[i - 1]                                                  #Differenzial für Integratoren
 
     # Leistung zum zeitpunkt i aus dem Dataframe (initialisierung in Variable)
     leistung_kw = Battery_Dataframe.at[i, 'Leistung [kW]']                      #Ablesen der Leistung aus Dataframe
@@ -55,7 +57,6 @@ for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
     Battery_Dataframe.at[i, 'Current [A]'] = i_zelle                            #Einspeisen in das Dataframe
 
     # Schritt 3: Berechnung der Ladung (Integrator)
-    dt = time[i] - time[i - 1]                                                  #Differenzial
     q_vorhanden_0 = Battery_Dataframe.at[i - 1, 'Charge [C]']                   #Ladung aus Zeitpunkt t-1
     q_vorhanden_1 = q_vorhanden_0 + i_zelle * dt                                #Integratorblock
     Battery_Dataframe.at[i, 'Charge [C]'] = q_vorhanden_1                       #Einspeisen in das Dataframe
@@ -73,34 +74,34 @@ for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
     # 5.1: 2-D Lookup Interpolation vom OCV [V]
     string_ocv = 'OCV [V]'
     # Aufrufen der Funktion
-    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, soc_steps_ocv, temp_steps, ocv)
+    interpolated_value = lookup_2d_v3(soc, ausgangs_temperatur_1, soc_steps_ocv, temp_steps, ocv)
     Battery_Dataframe.at[i, string_ocv] = interpolated_value
 
     # 5.2: 2-D Lookup Interpolation von R [Ohm]
     string_R = 'R [Ohm]'
     # Aufrufen der Funktion
-    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R)
+    interpolated_value = lookup_2d_v3(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R)
     Battery_Dataframe.at[i, string_R] = interpolated_value
 
     # 5.3: 2-D Lookup Interpolation von R1 [Ohm]
     string_R1 = 'R1 [Ohm]'
     # Aufrufen der Funktion
-    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R1)
+    interpolated_value = lookup_2d_v3(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R1)
     Battery_Dataframe.at[i, string_R1] = interpolated_value
 
     # 5.4: 2-D Lookup Interpolation von R2 [Ohm]
     string_R2 = 'R2 [Ohm]'
-    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R2)
+    interpolated_value = lookup_2d_v3(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, R2)
     Battery_Dataframe.at[i, string_R2] = interpolated_value
 
     # 5.5: 2-D Lookup Interpolation von C1 [C]
     string_C1 = 'C1 [C]'
-    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, C1)
+    interpolated_value = lookup_2d_v3(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, C1)
     Battery_Dataframe.at[i, string_C1] = interpolated_value
 
     # 5.6: 2-D Lookup Interpolation von C2 [C]
     string_C2 = 'C2 [C]'
-    interpolated_value = lookup_2d_v2(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, C2)
+    interpolated_value = lookup_2d_v3(soc, ausgangs_temperatur_1, SOCsteps, temp_steps, C2)
     Battery_Dataframe.at[i, string_C2] = interpolated_value
 
     # Schritt 6: Berechnung der Spannung
@@ -168,7 +169,7 @@ for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
     Battery_Dataframe.at[i, "Delta OCV [V]"] = delta_ocv                        #Einspeisen in das Dataframe
     ist_temperatur = Battery_Dataframe.at[i, 'Temperatur [K]']                  #Auslesen der ist-Temperatur
     q_reversibel = ist_temperatur * i_zelle * delta_ocv                         #Gain Block oder Multiplikator
-    Battery_Dataframe.at[i, "Q_Rev [W]"] = q_reversibel                         #Einspeisen in das Dataframe
+    Battery_Dataframe.at[i, "Q_Reversibel [W]"] = q_reversibel                         #Einspeisen in das Dataframe
 
     # Schritt 9: Berechnung von Zellwärme als Summe und einzeln
     q_zelle = q_reversibel + q_irreversibel                                     #Add Block
@@ -197,25 +198,24 @@ print('\nSimulation abgeschlossen!')
 #plot(Battery_Dataframe, "Zeit [s]", 'Leistung [W]')
 #plot(Battery_Dataframe, "Zeit [s]", 'Current [A]')
 #plot(Battery_Dataframe, "Zeit [s]", 'Charge [C]')
-#plot(Battery_Dataframe, "Zeit [s]", 'SOC [%]')
+plot(Battery_Dataframe, "Zeit [s]", 'SOC [%]')
 #plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'R [Ohm]')
-#plot(Battery_Dataframe, "Zeit [s]", 'R1 [Ohm]')
-plot(Battery_Dataframe, "Zeit [s]", 'R2 [Ohm]')
+plot(Battery_Dataframe, "Zeit [s]", 'R1 [Ohm]')
+#plot(Battery_Dataframe, "Zeit [s]", 'R2 [Ohm]')
 #plot(Battery_Dataframe, "Zeit [s]", 'C1 [Ohm]')
 #plot(Battery_Dataframe, "Zeit [s]", 'C2 [Ohm]')
 #plot(Battery_Dataframe, "Zeit [s]", 'U_R [V]')
-plot(Battery_Dataframe.head(100), "Zeit [s]", 'U_R1 [V]')
+#plot(Battery_Dataframe, "Zeit [s]", 'U_R1 [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'I_R1 [A]')
 #plot(Battery_Dataframe, "Zeit [s]", 'U_R2 [V]')
 #plot(Battery_Dataframe, "Zeit [s]", 'I_R2 [A]')
-plot(Battery_Dataframe.head(100), "Zeit [s]", 'U_ges [V]')
-#plot(Battery_Dataframe, "Zeit [s]", 'Q_Irrev [W]')
+#plot(Battery_Dataframe.head(100), "Zeit [s]", 'U_ges [V]')
 #plot(Battery_Dataframe, "Zeit [s]", "Delta OCV [V]")
 #plot(Battery_Dataframe, "Zeit [s]", 'Temperatur [K]')
-plot(Battery_Dataframe.head(100), "Zeit [s]", 'Output Temperature [K]')
-#plot(Battery_Dataframe, "Zeit [s]", "Q_Irrev [W]")
-#plot(Battery_Dataframe, "Zeit [s]", "Q_Rev [W]")
-#plot(Battery_Dataframe, "Zeit [s]", "Q_Cell [W]")
+plot(Battery_Dataframe, "Zeit [s]", 'Output Temperature [K]')
+plot(Battery_Dataframe, "Zeit [s]", "Q_Irreversibel [W]")
+plot(Battery_Dataframe, "Zeit [s]", "Q_Reversibel [W]")
+plot(Battery_Dataframe, "Zeit [s]", "Q_Sum_Cell [W]")
 
 Battery_Dataframe.to_csv('BatteryData_Output.csv', index=False)

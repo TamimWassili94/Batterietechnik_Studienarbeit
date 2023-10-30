@@ -4,7 +4,7 @@ import numpy as np
 from Functions_To_Call import plot, lookup_1d, lookup_2d, lookup_2d_v2
 print(f'Funtions_To_Call initialisiert')
 
-from Initial_Parameters import init_volt, init_q_zelle, init_temp, init_soc, kA, cp, m, anzahl_zellen
+from Initial_Parameters import init_volt, q_zelle, init_temp, init_soc, kA, cp, m, anzahl_zellen
 print(f'Initial_Parameters Initialisiert')
 
 from Time_Tables import (soc_steps_ocv, ocv, temp_steps,
@@ -65,7 +65,7 @@ for i, row in Battery_Dataframe.iloc[1:].head(100).iterrows():
     Battery_Dataframe.at[i, 'Charge [C]'] = q_vorhanden_1                       #Einspeisen in das Dataframe
 
     # Schritt 4: Umrechnung der Ladung in SOC
-    divident_q_zelle = 1 / init_q_zelle                                         #(initialisieren der Variable)
+    divident_q_zelle = 1 / q_zelle                                              #(initialisieren der Variable)
     stunden_in_sekunden = 1 / 3600                                              #(initialisieren der Variable)
     prozent = 100                                                               #(initialisieren der Variable)
     soc = q_vorhanden_1 * divident_q_zelle * stunden_in_sekunden * prozent      #Drei Gains oder Multiplikator
