@@ -185,6 +185,7 @@ for i, row in Battery_Dataframe.iloc[:-1].iterrows():  # Anpassung um Simulink g
     Battery_Dataframe.at[i + 1, "Q_Sum_Cell [W]"] = q_zelle_summe  # Einspeisen in das Dataframe
 
     # Schritt 10: Berechnung der Temperatur (Siehe Abschnitt Schmidt Bat Lab. Aufgabenstellung)
+
     delta_temperatur = ist_temperatur - ausgangs_temperatur_1  # Substract Block
     q_kuehlung_negativ = kA * delta_temperatur  # Negativ thermodynamische konvention
     sum_q = q_kuehlung_negativ + q_zelle  # Summe der Wärme
@@ -208,9 +209,15 @@ Time = Battery_Dataframe['Zeit [s]']
 Ladung_Dataframe_Simulink = Ladung_Dataframe['0']
 Ladung_Dataframe_Python = Battery_Dataframe['Charge [C]']
 error = Ladung_Dataframe_Simulink - Ladung_Dataframe_Python
-plt.plot(Time, error)
-plt.show()
 
+
+combined_dataframe = pd.concat([Ladung_Dataframe_Simulink, Ladung_Dataframe_Python], axis=1)
+combined_dataframe.columns = ['Ladung_Simulink', 'Ladung_Python']
+combined_dataframe['error'] = combined_dataframe['Ladung_Simulink'] - combined_dataframe['Ladung_Python']
+combined_dataframe['Zeit [s]'] = Battery_Dataframe ["Zeit [s]"]
+
+plot(combined_dataframe, "Zeit [s]", 'error')
+plot(Battery_Dataframe, "Zeit [s]", 'Charge [C]')
 plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
 plot(Battery_Dataframe, "Zeit [s]", 'U_R [V]')
 plot(Battery_Dataframe, "Zeit [s]", 'I_R1 [A]')

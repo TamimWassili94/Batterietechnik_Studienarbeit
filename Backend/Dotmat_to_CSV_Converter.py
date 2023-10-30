@@ -25,7 +25,7 @@ def dotmat_to_pandas(dateiname):
         scipydata = scipy.io.loadmat(dateiname)
 
         # Initialisieren des DataFrames mit den Daten aus 'A'
-        dataframe = pd.DataFrame(scipydata['Charge'])
+        dataframe = pd.DataFrame(scipydata['Ladung'])
 
         dataframe.to_csv('Charge_Simulink.csv', index=False)
 
