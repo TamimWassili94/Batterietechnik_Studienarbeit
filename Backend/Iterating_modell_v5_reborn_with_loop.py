@@ -160,6 +160,40 @@ for i, row in Battery_Dataframe.iloc[:-1].iterrows():  # Anpassung um Simulink g
 
     Battery_Dataframe.at[i + 1, 'U_ges [V]'] = u_zelle                              #Einspeisen in das Dataframe
 
+    # Schritt 7: Berechnung der irreversiblen Wärme
+    # 7.1: Berechnung der irreversiblen Wärme der ohmschen Größen
+    q_r = r * (i_zelle ** 2)  # Gain Block oder Multiplikator
+    q_r1 = r_1 * (i_r1 ** 2)  # Gain Block oder Multiplikator
+    q_r2 = r_2 * (i_r2 ** 2)  # Gain Block oder Multiplikator
+
+    # 7.2: Berechnung der irreversiblen Wärme
+    q_irreversibel = q_r + q_r1 + q_r2  # Add Block
+    Battery_Dataframe.at[i + 1, 'Q_Irreversibel [W]'] = q_irreversibel  # Einspeisen in das Dataframe
+
+    # Schritt 8: Berechnung von reversibler Wärme
+    delta_ocv = lookup_1d(soc, SOCsteps_Takano, DeltaOCVdT)  # Nutzung von 1-D Lookup Table
+    Battery_Dataframe.at[i + 1, "Delta OCV [V]"] = delta_ocv  # Einspeisen in das Dataframe
+    ist_temperatur = Battery_Dataframe.at[i + 1, 'Temperatur [K]']  # Auslesen der ist-Temperatur
+    q_reversibel = ist_temperatur * i_zelle * delta_ocv  # Gain Block oder Multiplikator
+    Battery_Dataframe.at[i + 1, "Q_Reversibel [W]"] = q_reversibel  # Einspeisen in das Dataframe
+
+    # Schritt 9: Berechnung von Zellwärme als Summe und einzeln
+    q_zelle = q_reversibel + q_irreversibel  # Add Block
+    Battery_Dataframe.at[i + 1, "Q_Cell [W]"] = q_zelle  # Einspeisen in das Dataframe
+
+    q_zelle_summe = anzahl_zellen * q_zelle  # Gain Block oder Multiplikator
+    Battery_Dataframe.at[i + 1, "Q_Sum_Cell [W]"] = q_zelle_summe  # Einspeisen in das Dataframe
+
+    # Schritt 10: Berechnung der Temperatur (Siehe Abschnitt Schmidt Bat Lab. Aufgabenstellung)
+    delta_temperatur = ist_temperatur - ausgangs_temperatur_1  # Substract Block
+    q_kuehlung_negativ = kA * delta_temperatur  # Negativ thermodynamische konvention
+    sum_q = q_kuehlung_negativ + q_zelle  # Summe der Wärme
+    d_temperatur = sum_q / (m * cp)  # Berechnung des temperatur differenzials
+    ausgangs_temperatur_0 = Battery_Dataframe.at[i , 'Output Temperature [K]']  # Temperatur aus letzter iteration
+    ausgangs_temperatur_1 = ausgangs_temperatur_0 + d_temperatur * dt  # Integrator Block
+
+    # Store this "output" temperature
+    Battery_Dataframe.at[i + 1, 'Output Temperature [K]'] = ausgangs_temperatur_1  # Einspeisen in das Dataframe
 
 
 
@@ -177,14 +211,14 @@ error = Ladung_Dataframe_Simulink - Ladung_Dataframe_Python
 plt.plot(Time, error)
 plt.show()
 
-plot(Battery_Dataframe.iloc[22:25], "Zeit [s]", 'OCV [V]')
-plot(Battery_Dataframe.iloc[22:25], "Zeit [s]", 'U_R [V]')
-plot(Battery_Dataframe.iloc[22:26], "Zeit [s]", 'I_R1 [A]')
-plot(Battery_Dataframe.iloc[22:26], "Zeit [s]", 'U_R1 [V]')
-plot(Battery_Dataframe.iloc[22:26], "Zeit [s]", 'U_R2 [V]')
-plot(Battery_Dataframe.iloc[22:26], "Zeit [s]", 'I_R2 [A]')
+plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
+plot(Battery_Dataframe, "Zeit [s]", 'U_R [V]')
+plot(Battery_Dataframe, "Zeit [s]", 'I_R1 [A]')
+plot(Battery_Dataframe, "Zeit [s]", 'U_R1 [V]')
+plot(Battery_Dataframe, "Zeit [s]", 'U_R2 [V]')
+plot(Battery_Dataframe, "Zeit [s]", 'I_R2 [A]')
 plot(Battery_Dataframe.iloc[22:28], "Zeit [s]", 'U_ges [V]')
-#plot(Battery_Dataframe, "Zeit [s]", 'Output Temperature [K]')
+plot(Battery_Dataframe, "Zeit [s]", 'Output Temperature [K]')
 #plot(Battery_Dataframe, "Zeit [s]", "Q_Irreversibel [W]")
 #plot(Battery_Dataframe, "Zeit [s]", "Q_Reversibel [W]")
 #plot(Battery_Dataframe.head(30), "Zeit [s]", "Q_Sum_Cell [W]")
