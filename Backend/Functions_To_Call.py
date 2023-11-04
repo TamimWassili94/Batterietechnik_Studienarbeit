@@ -18,13 +18,19 @@ def integrator(input_aktuell, output_vorher, dt):
 
 
 def lookup_1d(SOC, SOC_breakpoints, delta_OCV_data):
-    # Führe die Interpolation für den gegebenen SOC durch
-    interpolated_value = np.interp(SOC, SOC_breakpoints, delta_OCV_data)
+    # Prüft, ob der Wert innerhalb der Grenzen liegt
+    soc_min, soc_max = min(SOC_breakpoints), max(SOC_breakpoints)
 
-    # Wenn das Ergebnis NaN ist (obwohl unwahrscheinlich bei 1D-Interpolation), finde den nächsten Wert
-    if np.isnan(interpolated_value):
-        nearest_SOC_index = np.argmin(np.abs(np.array(SOC_breakpoints) - SOC))
-        interpolated_value = delta_OCV_data[nearest_SOC_index]
+    # Wenn SOC innerhalb der Grenzen ist, interpoliert
+    if soc_min <= SOC <= soc_max:
+        return np.interp(SOC, SOC_breakpoints, delta_OCV_data)
+
+    # Wenn SOC außerhalb der Grenzen ist, Warnung ausgeben
+    if SOC < soc_min or SOC > soc_max:
+        print(f"Warnung 1D: Der SOC-Wert von {SOC} liegt außerhalb der Grenzen und wird extrapoliert.")
+
+    # Führe die Interpolation (mit Extrapolation für außerhalb der Grenzen liegende Werte) durch
+    interpolated_value = np.interp(SOC, SOC_breakpoints, delta_OCV_data)
 
     return interpolated_value
 
@@ -72,45 +78,97 @@ def lookup_2d(dataframe, SOC_breakpoints, Temp_breakpoints, table_data):
 
 
 def lookup_2d_v2(SOC, Temp, SOC_breakpoints, Temp_breakpoints, table_data):
-    new_points = np.array([[Temp, SOC]])
-
-    points = np.array([[t, s] for t in Temp_breakpoints for s in SOC_breakpoints])
+    # Create the grid of points for which we have data
+    points = np.array([[s, t] for s in SOC_breakpoints for t in Temp_breakpoints])
     values = table_data.flatten()
 
-    interpolated_values = griddata(points, values, new_points, method='linear')
+    # Perform the interpolation
+    interpolated_value = griddata(points, values, (SOC, Temp), method='linear')
 
-    nan_indices = np.isnan(interpolated_values)
-    for idx in np.where(nan_indices)[0]:
-        nearest_SOC_indices = np.argsort(np.abs(SOC_breakpoints - SOC))[:2]
-        nearest_Temp_indices = np.argsort(np.abs(Temp_breakpoints - Temp))[:2]
+    if np.isnan(interpolated_value):
+        # Create an interpolation function over the grid
+        interp_func = interp2d(SOC_breakpoints, Temp_breakpoints, table_data, kind='linear')
 
-        # Using the closest two points to extrapolate
-        SOC_val = linear_extrapolate(SOC,
-                                     SOC_breakpoints[nearest_SOC_indices[0]],
-                                     SOC_breakpoints[nearest_SOC_indices[1]],
-                                     table_data[nearest_Temp_indices[0], nearest_SOC_indices[0]],
-                                     table_data[nearest_Temp_indices[0], nearest_SOC_indices[1]])
+        # Perform the interpolation/extrapolation using the function
+        # Ensure SOC and Temp are within arrays for interp_func
+        interpolated_value = interp_func([SOC], [Temp])
 
-        Temp_val = linear_extrapolate(Temp,
-                                      Temp_breakpoints[nearest_Temp_indices[0]],
-                                      Temp_breakpoints[nearest_Temp_indices[1]],
-                                      table_data[nearest_Temp_indices[0], nearest_SOC_indices[0]],
-                                      table_data[nearest_Temp_indices[1], nearest_SOC_indices[0]])
+        # Since interp2d returns a 2D array, extract the scalar value
+        # Check the dimensions of the output and index accordingly
+        if interpolated_value.ndim == 2:
+            interpolated_value = interpolated_value[0, 0]
+        else:
+            # If the result is somehow 1-dimensional, correct the indexing
+            interpolated_value = interpolated_value[0]
+    # If interpolated_value is not NaN, it's already the correct value
 
-        interpolated_values[idx] = (SOC_val + Temp_val) / 2
-
-    return interpolated_values
+    return interpolated_value
 
 
 def lookup_2d_v3(SOC, Temp, SOC_breakpoints, Temp_breakpoints, table_data):
     # Erstellt eine Interpolationsfunktion
     interp_func = interp2d(SOC_breakpoints, Temp_breakpoints, table_data, kind='linear')
 
+    # Grid für die Interpolation erstellen
+    SOC_grid, Temp_grid = np.meshgrid(SOC_breakpoints, Temp_breakpoints)
+    Z = interp_func(SOC_breakpoints, Temp_breakpoints)
+
+    # Plot vorbereiten
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Punktewolke plotten
+    ax.scatter(SOC_grid, Temp_grid, Z, color='red', label='Originaldaten')
+    ax.set_xlim(SOC_breakpoints.max(), SOC_breakpoints.min())
+    # Interpolierte Oberfläche plotten
+    # Erstellen Sie ein feineres Grid für die Oberfläche
+    SOC_fine = np.linspace(SOC_breakpoints.min(), SOC_breakpoints.max(), 30)
+    Temp_fine = np.linspace(Temp_breakpoints.min(), Temp_breakpoints.max(), 30)
+    SOC_grid_fine, Temp_grid_fine = np.meshgrid(SOC_fine, Temp_fine)
+    Z_fine = interp_func(SOC_fine, Temp_fine)
+
+    # Oberfläche zeichnen
+    surf = ax.plot_surface(SOC_grid_fine, Temp_grid_fine, Z_fine, cmap='viridis', alpha=0.7)
+
+    # Achsenbeschriftungen hinzufügen
+    ax.set_xlabel('SOC [%]')
+    ax.set_ylabel('Temperatur [°C]')
+    ax.set_zlabel('Wert')
+
+    # Legende hinzufügen
+    ax.legend()
+
+    # Farblegende für die Oberfläche hinzufügen
+    fig.colorbar(surf, shrink=0.5, aspect=5, label='Interpolierter Wert')
+
+    plt.show()
+
     # Werte interpolieren/extrapolieren
     result = interp_func(SOC, Temp)
     return result
 
 
+def lookup_2d_v4(SOC, Temp, SOC_breakpoints, Temp_breakpoints, table_data):
+    # Erstellt die Interpolationsfunktion
+    interp_func = interp2d(SOC_breakpoints, Temp_breakpoints, table_data, kind='linear')
 
+    # Prüft, ob die Werte innerhalb der Grenzen liegen
+    soc_min, soc_max = min(SOC_breakpoints), max(SOC_breakpoints)
+    temp_min, temp_max = min(Temp_breakpoints), max(Temp_breakpoints)
+
+    # Wenn SOC und Temp innerhalb der Grenzen sind, interpoliert
+    if soc_min <= SOC <= soc_max and temp_min <= Temp <= temp_max:
+        return interp_func(SOC, Temp)[0]
+
+    # Wenn SOC oder Temp außerhalb der Grenzen sind, Warnung ausgeben
+    if SOC < soc_min or SOC > soc_max:
+        print(f"Warnung 2D: Der SOC-Wert von {SOC} liegt außerhalb der Grenzen und muss extrapoliert werden.")
+
+    if Temp < temp_min or Temp > temp_max:
+        print(f"Warnung 2D: Der Temperaturwert von {Temp} liegt außerhalb der Grenzen und muss extrapoliert werden.")
+
+    # Hier kann man eine Extraopolationslogik einfügen
+    #     ... Extrapolieren ...
+    return interp_func(SOC, Temp)[0]
 
 
