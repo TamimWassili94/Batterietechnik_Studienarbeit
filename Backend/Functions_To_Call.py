@@ -162,11 +162,10 @@ def lookup_2d_v4(SOC, Temp, SOC_breakpoints, Temp_breakpoints, table_data):
 
     # Wenn SOC oder Temp außerhalb der Grenzen sind, Warnung ausgeben
     if SOC < soc_min or SOC > soc_max:
-        print(f"Warnung 2D: Der SOC-Wert von {SOC} liegt außerhalb der Grenzen und muss extrapoliert werden.")
+        print("\nWarnung 2D: Der SOC-Wert von {} liegt außerhalb der Grenzen und muss extrapoliert werden.".format(Temp))
 
     if Temp < temp_min or Temp > temp_max:
-        print(f"Warnung 2D: Der Temperaturwert von {Temp} liegt außerhalb der Grenzen und muss extrapoliert werden.")
-
+        print("\nWarnung 2D: Der SOC-Wert von {} liegt außerhalb der Grenzen und muss extrapoliert werden.".format(Temp))
     # Hier kann man eine Extraopolationslogik einfügen
     #     ... Extrapolieren ...
     return interp_func(SOC, Temp)[0]

@@ -15,7 +15,7 @@ print(f'Time_Tables Initialisiert')
 
 
 Battery_Dataframe = pd.read_csv('BatteryData_0.csv')
-Ladung_Dataframe = pd.read_csv('Charge_Simulink.csv')
+
 
 # 1. Pre-allocate columns with default values
 Battery_Dataframe['Leistung [W]'] = 0
@@ -28,7 +28,7 @@ Battery_Dataframe['I_R1 [A]'] = 0.0
 Battery_Dataframe['U_R2 [V]'] = 0.0
 
 Battery_Dataframe['I_R2 [A]'] = 0.0
-Battery_Dataframe['Q_Irrev [W]'] = 0
+Battery_Dataframe['Q_Irreversibel [W]'] = 0
 Battery_Dataframe["Q_Sum_Cell [W]"] = 0
 Battery_Dataframe['U_ges [V]'] = 0.0
 Battery_Dataframe.at[0, 'U_ges [V]'] = init_volt
@@ -153,96 +153,58 @@ for i, row in Battery_Dataframe.iloc[:-1].iterrows():  # Anpassung um Simulink g
     Battery_Dataframe.at[i + 1, 'U_R2 [V]'] = u_r2  # Einspeisen in das Dataframe
 
     # 6.9 Berechnung der gesamten Zellspannung
-    u_zelle1 = (
+    u_zelle = (
             Battery_Dataframe.at[i + 1, 'U_R1 [V]'] +
             Battery_Dataframe.at[i + 1, 'U_R2 [V]'] +
             Battery_Dataframe.at[i + 1, 'U_R [V]'] +
             Battery_Dataframe.at[i + 1, 'OCV [V]']
     ) * anzahl_zellen                                                           #Add Block
 
-    Battery_Dataframe.at[i + 1, 'U_ges [V]'] = u_zelle1                              #Einspeisen in das Dataframe
+    Battery_Dataframe.at[i + 1, 'U_ges [V]'] = u_zelle                              #Einspeisen in das Dataframe
 
     # Schritt 7: Berechnung der irreversiblen Wärme
     # 7.1: Berechnung der irreversiblen Wärme der ohmschen Größen
-    #q_r = r * (i_zelle ** 2)  # Gain Block oder Multiplikator
-    #q_r1 = r_1 * (i_r1 ** 2)  # Gain Block oder Multiplikator
-    #q_r2 = r_2 * (i_r2 ** 2)  # Gain Block oder Multiplikator
+    q_r = r * (i_zelle ** 2)  # Gain Block oder Multiplikator
+    q_r1 = r_1 * (i_r1 ** 2)  # Gain Block oder Multiplikator
+    q_r2 = r_2 * (i_r2 ** 2)  # Gain Block oder Multiplikator
 
     # 7.2: Berechnung der irreversiblen Wärme
-    #q_irreversibel = q_r + q_r1 + q_r2  # Add Block
-    #Battery_Dataframe.at[i + 1, 'Q_Irreversibel [W]'] = q_irreversibel  # Einspeisen in das Dataframe
+    q_irreversibel = q_r + q_r1 + q_r2  # Add Block
+    Battery_Dataframe.at[i + 1, 'Q_Irreversibel [W]'] = q_irreversibel  # Einspeisen in das Dataframe
 
     # Schritt 8: Berechnung von reversibler Wärme
-    #delta_ocv = lookup_1d(soc, SOCsteps_Takano, DeltaOCVdT)  # Nutzung von 1-D Lookup Table
-    #Battery_Dataframe.at[i + 1, "Delta OCV [V]"] = delta_ocv  # Einspeisen in das Dataframe
-    #ist_temperatur = Battery_Dataframe.at[i + 1, 'Temperatur [K]']  # Auslesen der ist-Temperatur
-    #q_reversibel = ist_temperatur * i_zelle * delta_ocv  # Gain Block oder Multiplikator
-    #Battery_Dataframe.at[i + 1, "Q_Reversibel [W]"] = q_reversibel  # Einspeisen in das Dataframe
+    delta_ocv = lookup_1d(soc, SOCsteps_Takano, DeltaOCVdT)  # Nutzung von 1-D Lookup Table
+    Battery_Dataframe.at[i + 1, "Delta OCV [V]"] = delta_ocv  # Einspeisen in das Dataframe
+    ist_temperatur = Battery_Dataframe.at[i + 1, 'Temperatur [K]']  # Auslesen der ist-Temperatur
+    q_reversibel = ist_temperatur * i_zelle * delta_ocv  # Gain Block oder Multiplikator
+    Battery_Dataframe.at[i + 1, "Q_Reversibel [W]"] = q_reversibel  # Einspeisen in das Dataframe
 
     # Schritt 9: Berechnung von Zellwärme als Summe und einzeln
-    #q_zelle = q_reversibel + q_irreversibel  # Add Block
-    #Battery_Dataframe.at[i + 1, "Q_Cell [W]"] = q_zelle  # Einspeisen in das Dataframe
+    q_zelle = q_reversibel + q_irreversibel  # Add Block
+    Battery_Dataframe.at[i + 1, "Q_Cell [W]"] = q_zelle  # Einspeisen in das Dataframe
 
-    #q_zelle_summe = anzahl_zellen * q_zelle  # Gain Block oder Multiplikator
-    #Battery_Dataframe.at[i + 1, "Q_Sum_Cell [W]"] = q_zelle_summe  # Einspeisen in das Dataframe
+    q_zelle_summe = anzahl_zellen * q_zelle  # Gain Block oder Multiplikator
+    Battery_Dataframe.at[i + 1, "Q_Sum_Cell [W]"] = q_zelle_summe  # Einspeisen in das Dataframe
 
     # Schritt 10: Berechnung der Temperatur (Siehe Abschnitt Schmidt Bat Lab. Aufgabenstellung)
 
-    #delta_temperatur = ist_temperatur - ausgangs_temperatur_1  # Substract Block
-    #q_kuehlung_negativ = kA * delta_temperatur  # Negativ thermodynamische konvention
-    #sum_q = q_kuehlung_negativ + q_zelle  # Summe der Wärme
-    #d_temperatur = sum_q / (m * cp)  # Berechnung des temperatur differenzials
-    #ausgangs_temperatur_0 = Battery_Dataframe.at[i , 'Output Temperature [K]']  # Temperatur aus letzter iteration
-    #ausgangs_temperatur_1 = ausgangs_temperatur_0 + d_temperatur * dt  # Integrator Block
+    delta_temperatur = ist_temperatur - ausgangs_temperatur_1  # Substract Block
+    q_kuehlung_negativ = kA * delta_temperatur  # Negativ thermodynamische konvention
+    sum_q = q_kuehlung_negativ + q_zelle  # Summe der Wärme
+    d_temperatur = sum_q / (m * cp)  # Berechnung des temperatur differenzials
+    ausgangs_temperatur_0 = Battery_Dataframe.at[i , 'Output Temperature [K]']  # Temperatur aus letzter iteration
+    ausgangs_temperatur_1 = ausgangs_temperatur_0 + d_temperatur * dt  # Integrator Block
 
-    # Store this "output" temperature
-    #Battery_Dataframe.at[i + 1, 'Output Temperature [K]'] = ausgangs_temperatur_1  # Einspeisen in das Dataframe
+    #Store this "output" temperature
+    Battery_Dataframe.at[i + 1, 'Output Temperature [K]'] = ausgangs_temperatur_1  # Einspeisen in das Dataframe
 
 
 
 print('\nSimulation abgeschlossen!')
-
+Battery_Dataframe.to_csv('Battery_Dataframe_full_R2.csv', index=False)
 
 #Battery_Dataframe = Battery_Dataframe.drop(Battery_Dataframe.index[-1])
 
-print(len(Battery_Dataframe))
-
-Time = Battery_Dataframe['Zeit [s]']
-Ladung_Dataframe_Simulink = Ladung_Dataframe['Charge']
-Ladung_Dataframe_Python = Battery_Dataframe['Charge [C]']
-error = Ladung_Dataframe_Simulink - Ladung_Dataframe_Python
-
-
-combined_dataframe = pd.concat([Ladung_Dataframe_Simulink, Ladung_Dataframe_Python], axis=1)
-combined_dataframe.columns = ['Ladung_Simulink [C]', 'Ladung_Python [C]']
-combined_dataframe['error'] = combined_dataframe['Ladung_Simulink [C]'] - combined_dataframe['Ladung_Python [C]']
-combined_dataframe['relative_error'] = (combined_dataframe['Ladung_Simulink [C]'] - combined_dataframe['Ladung_Python [C]']) / combined_dataframe['Ladung_Simulink [C]']
-combined_dataframe['prozentualer Fehlerverlauf [%]'] = 100 * (combined_dataframe['Ladung_Simulink [C]'] - combined_dataframe['Ladung_Python [C]']) / combined_dataframe['Ladung_Simulink [C]']
-combined_dataframe['Zeit [s]'] = Battery_Dataframe ["Zeit [s]"]
-
-# Erstelle eine Figur und ein Set von Subplots
-fig, axs = plt.subplots(2, 1, figsize=(10, 6))  # 2 Zeilen, 1 Spalte, mit einer Gesamtfigurgröße
-
-# Erster Subplot für den Fehler
-axs[0].plot(combined_dataframe['Zeit [s]'], combined_dataframe['prozentualer Fehlerverlauf [%]'])
-axs[0].set_xlabel('Zeit [s]')
-axs[0].set_ylabel('prozentualer Fehler [%]')
-axs[0].set_title('prozentualer Fehlerverlauf')
-
-# Zweiter Subplot für die Ladungen
-axs[1].plot(combined_dataframe['Zeit [s]'], combined_dataframe['Ladung_Python [C]'], label='Ladung_Python [C]')
-axs[1].plot(combined_dataframe['Zeit [s]'], combined_dataframe['Ladung_Simulink [C]'], label='Ladung_Simulink [C]')
-axs[1].set_xlabel('Zeit [s]')
-axs[1].set_ylabel('Ladung [C]')
-axs[1].set_title('Ladungsverlauf')
-
-# Füge Legenden hinzu
-axs[1].legend()
-
-# Verbessere Layout
-plt.tight_layout()
-
-plt.show()
 
 
 plot(Battery_Dataframe, "Zeit [s]", 'OCV [V]')
