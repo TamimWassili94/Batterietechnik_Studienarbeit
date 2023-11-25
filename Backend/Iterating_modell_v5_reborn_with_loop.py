@@ -8,9 +8,9 @@ print(f'Funtions_To_Call initialisiert')
 from Initial_Parameters import init_volt, init_q_zelle, init_temp, init_soc, kA, cp, m, anzahl_zellen
 print(f'Initial_Parameters Initialisiert')
 
-from Time_Tables import (soc_steps_ocv, ocv_tbl, temp_steps,
-                                R_tbl, SOCsteps, R1_tbl, C1_tbl, R2_tbl, C2_tbl,
-                         DeltaOCVdT, SOCsteps_Takano)
+from Breakpoint_Tables import (soc_steps_ocv, ocv_tbl, temp_steps,
+                               R_tbl, SOCsteps, R1_tbl, C1_tbl, R2_tbl, C2_tbl,
+                               DeltaOCVdT, SOCsteps_Takano)
 print(f'Time_Tables Initialisiert')
 
 

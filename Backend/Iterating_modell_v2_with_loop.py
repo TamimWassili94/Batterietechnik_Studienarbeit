@@ -5,8 +5,8 @@ from Functions_To_Call import plot, lookup_1d, lookup_2d
 print(f'Funtions_To_Call initialisiert')
 from Initial_Parameters import init_volt, init_q_zelle, init_temp, init_soc, kA, cp, m, anzahl_zellen
 print(f'Initial_Parameters Initialisiert')
-from Time_Tables import (soc_steps_ocv, ocv, temp_steps,
-                                R, SOCsteps, R1, C1, R2, C2, DeltaOCVdT, SOCsteps_Takano)
+from Breakpoint_Tables import (soc_steps_ocv, ocv, temp_steps,
+                               R, SOCsteps, R1, C1, R2, C2, DeltaOCVdT, SOCsteps_Takano)
 print(f'Time_Tables Initialisiert')
 
 Battery_Dataframe = pd.read_csv('BatteryData_0.csv')

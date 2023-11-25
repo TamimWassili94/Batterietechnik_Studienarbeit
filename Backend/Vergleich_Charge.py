@@ -13,7 +13,6 @@ Ladung_Dataframe_Simulink0 = Ladung_Dataframe0['Charge']
 Ladung_Dataframe_Python0 = Battery_Dataframe_partial['Charge [C]']
 error_partial = Ladung_Dataframe_Simulink0 - Ladung_Dataframe_Python0
 
-
 combined_dataframe_partial = pd.concat([Ladung_Dataframe_Simulink0, Ladung_Dataframe_Python0], axis=1)
 combined_dataframe_partial['Zeit [s]'] = Time
 combined_dataframe_partial.columns = ['Ladung_Simulink [F]', 'Ladung_Python [F]', 'Zeit [s]']

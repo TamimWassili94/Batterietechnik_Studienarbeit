@@ -1,5 +1,7 @@
 import numpy as np
 
+"""Breakpoint Tables die aus MatLab in Numpy-Arrays konvertiert wurden"""
+
 # SOC steps [%]
 SOCsteps = np.arange(30, 71, 10)
 soc_steps_ocv = np.arange(0,101,10)
@@ -7,20 +9,18 @@ soc_steps_ocv = np.arange(0,101,10)
 # Temperaturschritte [K]
 temp_steps = np.array([253.15, 263.15, 283.15, 298.15, 313.15, 323.15])
 
-# Open circuit voltage [V] OCV(SOC,T) mit Reihe (Tsteps) und Spalte (SOCsteps_OCV)
+# Open circuit voltage [V] OCV(SOC,T) mit Reihe (Tsteps) [K] und Spalte (SOCsteps_OCV) [V]
 ocv_pre_vector = np.array([3.3383, 3.4305, 3.5207, 3.5875, 3.6381, 3.7006, 3.7786, 3.8741, 3.9564, 4.0601, 4.1651])
 ocv_tbl = np.tile(ocv_pre_vector, (len(temp_steps), 1))
-
 
 # Kapazität
 KAPtotal = 4.75
 
-# Ohmscher Widerstand R
+# Ohmscher Widerstand R [Ohm]
 R_values = np.array([0.015456, 0.008921403, 0.003025827, 0.00178, 0.0013081, 0.0011997])
 R_tbl = np.outer(R_values, np.ones(len(SOCsteps)))
 
-
-# Ohmscher Widerstand R1
+# Ohmscher Widerstand R1 [Ohm]
 R1_tbl = np.array([
     [0.003438371, 0.002916329, 0.002500086, 0.003006543, 0.002435014],
     [0.002858014, 0.001729457, 0.001255586, 0.000980971, 0.000816457],
@@ -30,8 +30,7 @@ R1_tbl = np.array([
     [0.000733214, 0.000687786, 0.000560757, 0.000530671, 0.000526186]
 ])
 
-
-# Kapazität C1
+# Kapazität C1 [F]
 C1_tbl = np.array([
     [74.07342857, 77.83357143, 69.622, 55.87042857, 60.53857143],
     [286.3941429, 660.9157143, 931.9482857, 872.1554286, 1078.943714],
@@ -41,7 +40,7 @@ C1_tbl = np.array([
     [6199.531429, 6119.823143, 6281.261143, 8212.094, 9745.440571]
 ])
 
-# Ohmscher Widerstand R2
+# Ohmscher Widerstand R2 [Ohm]
 R2_tbl = np.array([
     [0.008776371, 0.006872929, 0.007282371, 0.0077283, 0.006168],
     [0.0083573, 0.006514429, 0.006704257, 0.004338714, 0.002015429],
@@ -51,18 +50,7 @@ R2_tbl = np.array([
     [0.001074429, 0.0010991, 0.001066529, 0.0010419, 0.001026757]
 ])
 
-
-R2_tbl = np.array([
-    [0.008776371, 0.006872929, 0.007282371, 0.0077283, 0.006168],
-    [0.0083573, 0.006514429, 0.006704257, 0.004338714, 0.002015429],
-    [0.0019077, 0.001436825, 0.0016947, 0.0016471, 0.001013233],
-    [0.00124686, 0.0009181, 0.00110466, 0.00111646, 0.00128264],
-    [0.001085071, 0.001098714, 0.001094271, 0.001083786, 0.001044357],
-    [0.001074429, 0.0010991, 0.001066529, 0.0010419, 0.001026757]
-])
-
-
-# Kapazität C2
+# Kapazität C2 [F]
 C2_tbl = np.array([
     [2501.824714, 4851.367714, 6117.925857, 5847.742857, 6737.781286],
     [3378.918857, 5195.220857, 9283.824143, 11465.34029, 12217.21114],
@@ -75,5 +63,6 @@ C2_tbl = np.array([
 # Reversible Wärmefreisetzung dOCV/dt(SOC) [V/K]
 SOCsteps_Takano = np.arange(0, 101, 5)
 
+# Differenz Open Circuit Voltage [V]
 DeltaOCVdT = 1e-3 * np.array([-0.06, -0.2, -0.3, -0.35, -0.25, -0.2, -0.145, -0.11, -0.1, 0,
                               0.05, 0.1, 0.19, 0.15, 0.12, 0.1, 0.05, 0.05, 0.05, 0.025, 0])
